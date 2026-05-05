@@ -1,27 +1,35 @@
-"use client";
-
-import { useMemo } from "react";
-import { useStore } from "@/lib/store";
-import { todayKey } from "@/lib/seed";
 import { BookingRow } from "@/components/BookingRow";
 import { EmptyState } from "@/components/EmptyState";
+import {
+  getAllBookings,
+  getAllSlots,
+  getServicesAdmin,
+} from "@/lib/db/admin";
+import { todayKey } from "@/lib/seed";
 
-export default function AdminDashboardPage() {
-  const { bookings, getService, getSlot } = useStore();
+export const dynamic = "force-dynamic";
+
+export default async function AdminDashboardPage() {
+  const [bookings, services, slots] = await Promise.all([
+    getAllBookings(),
+    getServicesAdmin(),
+    getAllSlots(),
+  ]);
+
   const today = todayKey();
+  const slotById = new Map(slots.map((s) => [s.id, s]));
+  const serviceById = new Map(services.map((s) => [s.id, s]));
 
-  const todays = useMemo(() => {
-    return bookings
-      .filter((b) => {
-        const slot = getSlot(b.slotId);
-        return slot?.date === today && b.status !== "cancelled";
-      })
-      .sort((a, b) => {
-        const sa = getSlot(a.slotId)?.time ?? "";
-        const sb = getSlot(b.slotId)?.time ?? "";
-        return sa.localeCompare(sb);
-      });
-  }, [bookings, today, getSlot]);
+  const todays = bookings
+    .filter((b) => {
+      const slot = slotById.get(b.slotId);
+      return slot?.date === today && b.status !== "cancelled";
+    })
+    .sort((a, b) => {
+      const sa = slotById.get(a.slotId)?.time ?? "";
+      const sb = slotById.get(b.slotId)?.time ?? "";
+      return sa.localeCompare(sb);
+    });
 
   const pending = todays.filter((b) => b.status === "pending").length;
   const done = todays.filter((b) => b.status === "done").length;
@@ -54,8 +62,8 @@ export default function AdminDashboardPage() {
             <li key={b.id}>
               <BookingRow
                 booking={b}
-                service={getService(b.serviceId)}
-                slot={getSlot(b.slotId)}
+                service={serviceById.get(b.serviceId)}
+                slot={slotById.get(b.slotId)}
               />
             </li>
           ))}

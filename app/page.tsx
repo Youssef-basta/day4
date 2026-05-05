@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { BrandHeader } from "@/components/BrandHeader";
 import { BarberPole } from "@/components/BarberPole";
@@ -24,7 +22,7 @@ import {
   BubblesIcon,
   BottleIcon,
 } from "@/components/icons";
-import { useStore } from "@/lib/store";
+import { getServices, getAddons } from "@/lib/db/catalog";
 
 const SERVICE_ICONS: Record<string, typeof ScissorsIcon> = {
   haircut: ScissorsIcon,
@@ -45,8 +43,8 @@ const ADDON_ICONS: Record<string, typeof ScissorsIcon> = {
   wash: BubblesIcon,
 };
 
-export default function HomePage() {
-  const { services, addons } = useStore();
+export default async function HomePage() {
+  const [services, addons] = await Promise.all([getServices(), getAddons()]);
 
   return (
     <>

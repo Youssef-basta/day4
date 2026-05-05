@@ -1,18 +1,32 @@
-"use client";
-
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { BrandHeader } from "@/components/BrandHeader";
-import { useStore } from "@/lib/store";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { bookingTotals } from "@/lib/pricing";
 import { methodLabel } from "@/components/PaymentBadge";
+import { getBookingById } from "@/lib/db/admin";
+import { getServicesAdmin, getAddonsAdmin } from "@/lib/db/admin";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { mapSlot } from "@/lib/db/map";
 
-export default function ConfirmationPage() {
-  const params = useParams<{ id: string }>();
-  const { getBooking, getService, getSlot, services, addons } = useStore();
+export const dynamic = "force-dynamic";
 
-  const booking = getBooking(params.id);
+async function getSlotById(id: string) {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("slots")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapSlot(data) : null;
+}
+
+export default async function ConfirmationPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const booking = await getBookingById(params.id);
 
   if (!booking) {
     return (
@@ -33,8 +47,12 @@ export default function ConfirmationPage() {
     );
   }
 
-  const service = getService(booking.serviceId);
-  const slot = getSlot(booking.slotId);
+  const [services, addons, slot] = await Promise.all([
+    getServicesAdmin(),
+    getAddonsAdmin(),
+    getSlotById(booking.slotId),
+  ]);
+  const service = services.find((s) => s.id === booking.serviceId);
   const totals = bookingTotals(booking, services, addons);
 
   return (
@@ -46,10 +64,10 @@ export default function ConfirmationPage() {
             ✓
           </div>
           <h1 className="text-xl font-bold text-brand-blue mt-3">
-            You're booked!
+            You&apos;re booked!
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            We'll see you soon, {booking.customerName.split(" ")[0]}.
+            We&apos;ll see you soon, {booking.customerName.split(" ")[0]}.
           </p>
 
           <div className="mt-5 rounded-xl bg-gray-50 px-4 py-4 text-left text-sm">
@@ -89,7 +107,7 @@ export default function ConfirmationPage() {
 
         <section className="mt-6">
           <h2 className="text-sm font-bold text-brand-blue uppercase tracking-wider mb-2">
-            What's next
+            What&apos;s next
           </h2>
           <ol className="card space-y-3 text-sm list-decimal list-inside">
             <li>Save your reference: <span className="font-semibold">{booking.ref}</span></li>

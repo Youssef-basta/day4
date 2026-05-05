@@ -1,27 +1,36 @@
-"use client";
-
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useStore } from "@/lib/store";
 import { StatusChip } from "@/components/StatusChip";
 import { PaymentBadge, methodLabel } from "@/components/PaymentBadge";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { bookingTotals } from "@/lib/pricing";
+import {
+  getAddonsAdmin,
+  getBookingById,
+  getServicesAdmin,
+} from "@/lib/db/admin";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { mapSlot } from "@/lib/db/map";
+import { BookingActions } from "./BookingActions";
 
-export default function AdminBookingDetailPage() {
-  const params = useParams<{ id: string }>();
-  const router = useRouter();
-  const {
-    getBooking,
-    getService,
-    getSlot,
-    updateStatus,
-    markPaid,
-    services,
-    addons,
-  } = useStore();
+export const dynamic = "force-dynamic";
 
-  const booking = getBooking(params.id);
+async function getSlotById(id: string) {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("slots")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapSlot(data) : null;
+}
+
+export default async function AdminBookingDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const booking = await getBookingById(params.id);
 
   if (!booking) {
     return (
@@ -34,21 +43,13 @@ export default function AdminBookingDetailPage() {
     );
   }
 
-  const service = getService(booking.serviceId);
-  const slot = getSlot(booking.slotId);
+  const [services, addons, slot] = await Promise.all([
+    getServicesAdmin(),
+    getAddonsAdmin(),
+    getSlotById(booking.slotId),
+  ]);
+  const service = services.find((s) => s.id === booking.serviceId);
   const totals = bookingTotals(booking, services, addons);
-
-  function markDone() {
-    if (!booking) return;
-    updateStatus(booking.id, "done");
-  }
-  function cancel() {
-    if (!booking) return;
-    if (confirm("Cancel this booking? The slot will reopen.")) {
-      updateStatus(booking.id, "cancelled");
-      router.push("/admin/bookings");
-    }
-  }
 
   return (
     <div>
@@ -113,27 +114,7 @@ export default function AdminBookingDetailPage() {
         </dl>
       </div>
 
-      {booking.paymentMethod === "cash" &&
-        booking.paymentStatus === "unpaid" &&
-        booking.status !== "cancelled" && (
-          <button
-            onClick={() => markPaid(booking.id)}
-            className="btn-primary w-full mt-4"
-          >
-            Mark cash as Paid
-          </button>
-        )}
-
-      {booking.status === "pending" && (
-        <div className="mt-5 flex gap-3">
-          <button onClick={cancel} className="btn-outline flex-1">
-            Cancel
-          </button>
-          <button onClick={markDone} className="btn-accent flex-1">
-            Mark as Done
-          </button>
-        </div>
-      )}
+      <BookingActions booking={booking} />
 
       {booking.status === "done" && (
         <p className="card mt-5 text-sm text-green-700 font-semibold text-center">

@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { BookingProvider } from "@/lib/store";
 import { BackdropDecoration } from "@/components/BackdropDecoration";
 
 export const metadata: Metadata = {
@@ -23,9 +22,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <BackdropDecoration />
-        <BookingProvider>
-          <div className="relative min-h-screen">{children}</div>
-        </BookingProvider>
+        <div className="relative min-h-screen">{children}</div>
       </body>
     </html>
   );
