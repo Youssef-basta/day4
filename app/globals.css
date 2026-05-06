@@ -109,6 +109,10 @@ body {
   .drift-a, .drift-b, .drift-c, .drift-d { animation: none; }
 }
 
+/* Hide scrollbar on horizontally-scrollable containers (admin tab nav). */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+
 .studio-tile::after {
   content: "";
   @apply absolute inset-0 pointer-events-none;

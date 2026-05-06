@@ -2,7 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { BookingStatus, DrinkOrder } from "@/lib/types";
+import type {
+  BookingStatus,
+  DrinkOrder,
+  ServiceTier,
+  StudioSettings,
+} from "@/lib/types";
 
 export async function updateBookingStatusAction(
   bookingId: string,
@@ -106,6 +111,164 @@ export async function updateBookingExtrasAction(
   if (error) throw error;
 
   revalidatePath("/admin", "layout");
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Customer admin
+// ────────────────────────────────────────────────────────────────────
+
+export async function toggleVipAction(phone: string, isVip: boolean) {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("customers")
+    .upsert(
+      { phone, is_vip: isVip, updated_at: new Date().toISOString() },
+      { onConflict: "phone" }
+    );
+  if (error) throw error;
+  revalidatePath("/admin/customers");
+}
+
+export async function setCustomerNotesAction(phone: string, notes: string) {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("customers")
+    .upsert(
+      {
+        phone,
+        notes: notes.trim() || null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "phone" }
+    );
+  if (error) throw error;
+  revalidatePath("/admin/customers");
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Service catalog admin
+// ────────────────────────────────────────────────────────────────────
+
+type ServiceInput = {
+  id: string;
+  name: string;
+  durationMin: number;
+  priceKwd: number;
+  description?: string;
+  tier?: ServiceTier;
+  sortOrder?: number;
+  isActive?: boolean;
+};
+
+function validateServiceInput(input: ServiceInput) {
+  if (!/^[a-z0-9_-]+$/.test(input.id)) {
+    throw new Error("Service ID must be lowercase letters, numbers, _ or -");
+  }
+  if (!input.name.trim()) throw new Error("Name is required");
+  if (input.durationMin <= 0) throw new Error("Duration must be > 0 min");
+  if (input.priceKwd < 0) throw new Error("Price must be >= 0");
+}
+
+export async function createServiceAction(input: ServiceInput) {
+  validateServiceInput(input);
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("services").insert({
+    id: input.id,
+    name: input.name.trim(),
+    duration_min: input.durationMin,
+    price_kwd: input.priceKwd,
+    description: input.description?.trim() || null,
+    tier: input.tier ?? null,
+    sort_order: input.sortOrder ?? 100,
+    is_active: input.isActive ?? true,
+  });
+  if (error) throw error;
+  revalidatePath("/admin/services");
+  revalidatePath("/", "layout");
+}
+
+export async function updateServiceAction(input: ServiceInput) {
+  validateServiceInput(input);
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("services")
+    .update({
+      name: input.name.trim(),
+      duration_min: input.durationMin,
+      price_kwd: input.priceKwd,
+      description: input.description?.trim() || null,
+      tier: input.tier ?? null,
+      sort_order: input.sortOrder ?? 100,
+      is_active: input.isActive ?? true,
+    })
+    .eq("id", input.id);
+  if (error) throw error;
+  revalidatePath("/admin/services");
+  revalidatePath("/", "layout");
+}
+
+export async function deleteServiceAction(id: string) {
+  const supabase = createAdminClient();
+  // Try hard delete; if FK blocks because past bookings reference it,
+  // fall back to soft delete (is_active = false).
+  const del = await supabase.from("services").delete().eq("id", id);
+  if (del.error) {
+    const soft = await supabase
+      .from("services")
+      .update({ is_active: false })
+      .eq("id", id);
+    if (soft.error) throw soft.error;
+  }
+  revalidatePath("/admin/services");
+  revalidatePath("/", "layout");
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Studio settings admin
+// ────────────────────────────────────────────────────────────────────
+
+export async function updateSettingsAction(
+  input: Partial<StudioSettings>
+) {
+  const supabase = createAdminClient();
+  if (!input.brandName || !input.brandName.trim()) {
+    throw new Error("Brand name is required");
+  }
+  if (input.graceMin !== undefined && input.graceMin < 0) {
+    throw new Error("Grace minutes must be >= 0");
+  }
+
+  const row = {
+    brand_name: input.brandName.trim(),
+    hero_kicker: input.heroKicker?.trim() || null,
+    hero_headline_1: input.heroHeadline1?.trim() || null,
+    hero_headline_2: input.heroHeadline2?.trim() || null,
+    hero_subheading: input.heroSubheading?.trim() || null,
+    feature_1_title: input.feature1Title?.trim() || null,
+    feature_1_hint: input.feature1Hint?.trim() || null,
+    feature_2_title: input.feature2Title?.trim() || null,
+    feature_2_hint: input.feature2Hint?.trim() || null,
+    feature_3_title: input.feature3Title?.trim() || null,
+    feature_3_hint: input.feature3Hint?.trim() || null,
+    address_line_1: input.addressLine1?.trim() || null,
+    address_line_2: input.addressLine2?.trim() || null,
+    hours_line_1: input.hoursLine1?.trim() || null,
+    hours_line_2: input.hoursLine2?.trim() || null,
+    phone: input.phone?.trim() || null,
+    phone_hint: input.phoneHint?.trim() || null,
+    phone_placeholder: input.phonePlaceholder?.trim() || null,
+    grace_min: input.graceMin ?? 30,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase
+    .from("studio_settings")
+    .update(row)
+    .eq("id", 1);
+  if (error) throw error;
+
+  revalidatePath("/admin/settings");
+  revalidatePath("/", "layout");
 }
 
 export async function toggleSlotAction(slotId: string) {

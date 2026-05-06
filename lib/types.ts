@@ -7,6 +7,27 @@ export type Service = {
   priceKwd: number;
   description?: string;
   tier?: ServiceTier;
+  isActive: boolean;
+};
+
+export type Customer = {
+  phone: string;
+  isVip: boolean;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CustomerSummary = {
+  phone: string;
+  displayName: string;
+  bookingCount: number;
+  doneCount: number;
+  cancelledCount: number;
+  totalSpentKwd: number;
+  lastVisit?: string;
+  isVip: boolean;
+  notes?: string;
 };
 
 export type Addon = {

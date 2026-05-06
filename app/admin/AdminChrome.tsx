@@ -9,6 +9,12 @@ const TABS = [
   { href: "/admin", label: "Today" },
   { href: "/admin/bookings", label: "Bookings" },
   { href: "/admin/slots", label: "Slots" },
+  { href: "/admin/customers", label: "Customers" },
+  { href: "/admin/services", label: "Services" },
+  { href: "/admin/reports", label: "Reports" },
+  { href: "/admin/staff", label: "Staff" },
+  { href: "/admin/reminders", label: "Reminders" },
+  { href: "/admin/settings", label: "Settings" },
 ];
 
 export function AdminChrome({
@@ -37,26 +43,28 @@ export function AdminChrome({
         </div>
       </div>
       <nav className="bg-slate-800 border-b border-slate-700 sticky top-0 z-10">
-        <div className="mx-auto max-w-md px-2 flex">
-          {TABS.map((t) => {
-            const active =
-              t.href === "/admin"
-                ? pathname === "/admin"
-                : pathname.startsWith(t.href);
-            return (
-              <Link
-                key={t.href}
-                href={t.href}
-                className={`flex-1 text-center py-3 text-sm font-semibold border-b-2 transition ${
-                  active
-                    ? "border-brand-yellow text-brand-yellow"
-                    : "border-transparent text-slate-300 hover:text-white"
-                }`}
-              >
-                {t.label}
-              </Link>
-            );
-          })}
+        <div className="mx-auto max-w-md overflow-x-auto no-scrollbar">
+          <div className="flex px-2 min-w-max">
+            {TABS.map((t) => {
+              const active =
+                t.href === "/admin"
+                  ? pathname === "/admin"
+                  : pathname.startsWith(t.href);
+              return (
+                <Link
+                  key={t.href}
+                  href={t.href}
+                  className={`px-4 py-3 text-sm font-semibold border-b-2 whitespace-nowrap transition ${
+                    active
+                      ? "border-brand-yellow text-brand-yellow"
+                      : "border-transparent text-slate-300 hover:text-white"
+                  }`}
+                >
+                  {t.label}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </nav>
       <main className="mx-auto max-w-md px-4 py-5 pb-24">{children}</main>

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BookingRow } from "@/components/BookingRow";
 import { EmptyState } from "@/components/EmptyState";
 import {
@@ -35,6 +36,26 @@ export default async function AdminDashboardPage() {
   const pending = todays.filter((b) => b.status === "pending").length;
   const done = todays.filter((b) => b.status === "done").length;
 
+  // Notifications: pending today, unpaid cash bookings, recent no-shows.
+  const unpaidCash = bookings.filter(
+    (b) =>
+      b.status !== "cancelled" &&
+      b.paymentMethod === "cash" &&
+      b.paymentStatus === "unpaid"
+  ).length;
+
+  const last7Iso = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 6);
+    return d.toISOString().slice(0, 10);
+  })();
+  const recentNoShows = bookings.filter((b) => {
+    if (b.status !== "cancelled") return false;
+    if (b.cancellationReason !== "no_show") return false;
+    const slot = slotById.get(b.slotId);
+    return slot && slot.date >= last7Iso;
+  }).length;
+
   // Next 12 slots from today onward — open ones in green, booked in red.
   const now = new Date();
   const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
@@ -60,6 +81,45 @@ export default async function AdminDashboardPage() {
         <Stat label="Pending" value={pending} accent="yellow" />
         <Stat label="Done" value={done} accent="green" />
       </div>
+
+      {/* PENDING ACTIONS */}
+      {(pending > 0 || unpaidCash > 0 || recentNoShows > 0) && (
+        <section className="mb-7">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+            Needs your attention
+          </h2>
+          <ul className="space-y-2">
+            {pending > 0 && (
+              <NotifRow
+                href="/admin/bookings"
+                accent="yellow"
+                title={`${pending} pending today`}
+                hint="Bookings still to mark Done or Cancelled"
+              />
+            )}
+            {unpaidCash > 0 && (
+              <NotifRow
+                href="/admin/bookings"
+                accent="orange"
+                title={`${unpaidCash} unpaid cash booking${
+                  unpaidCash === 1 ? "" : "s"
+                }`}
+                hint="Mark as paid once collected on site"
+              />
+            )}
+            {recentNoShows > 0 && (
+              <NotifRow
+                href="/admin/bookings"
+                accent="red"
+                title={`${recentNoShows} no-show${
+                  recentNoShows === 1 ? "" : "s"
+                } in the last 7 days`}
+                hint="Auto-cancelled by the no-show sweep"
+              />
+            )}
+          </ul>
+        </section>
+      )}
 
       {/* TODAY'S BOOKINGS */}
       <section className="mb-7">
@@ -133,6 +193,35 @@ export default async function AdminDashboardPage() {
         </section>
       )}
     </div>
+  );
+}
+
+function NotifRow({
+  href,
+  accent,
+  title,
+  hint,
+}: {
+  href: string;
+  accent: "yellow" | "orange" | "red";
+  title: string;
+  hint: string;
+}) {
+  const colors = {
+    yellow: "bg-yellow-50 border-yellow-300 text-yellow-900",
+    orange: "bg-orange-50 border-orange-300 text-orange-900",
+    red: "bg-red-50 border-red-300 text-red-900",
+  } as const;
+  return (
+    <li>
+      <Link
+        href={href}
+        className={`block rounded-xl border-2 px-3 py-2.5 ${colors[accent]}`}
+      >
+        <p className="text-sm font-bold">{title}</p>
+        <p className="text-[11px] opacity-80">{hint}</p>
+      </Link>
+    </li>
   );
 }
 

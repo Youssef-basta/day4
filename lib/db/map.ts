@@ -25,6 +25,8 @@ export function mapService(r: ServiceRow): Service {
     priceKwd: r.price_kwd,
     description: r.description ?? undefined,
     tier: (r.tier ?? undefined) as Service["tier"],
+    // is_active was added in a later migration — default to true for older rows
+    isActive: (r as ServiceRow & { is_active?: boolean }).is_active ?? true,
   };
 }
 

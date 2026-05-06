@@ -140,6 +140,7 @@ export type Database = {
           description: string | null
           duration_min: number
           id: string
+          is_active: boolean
           name: string
           price_kwd: number
           sort_order: number
@@ -149,6 +150,7 @@ export type Database = {
           description?: string | null
           duration_min: number
           id: string
+          is_active?: boolean
           name: string
           price_kwd: number
           sort_order?: number
@@ -158,10 +160,35 @@ export type Database = {
           description?: string | null
           duration_min?: number
           id?: string
+          is_active?: boolean
           name?: string
           price_kwd?: number
           sort_order?: number
           tier?: Database["public"]["Enums"]["service_tier"] | null
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          phone: string
+          is_vip: boolean
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          phone: string
+          is_vip?: boolean
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          phone?: string
+          is_vip?: boolean
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: []
       }
