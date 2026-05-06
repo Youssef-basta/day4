@@ -6,6 +6,7 @@ import {
   getServicesAdmin,
 } from "@/lib/db/admin";
 import { todayKey } from "@/lib/seed";
+import { formatDateLong, formatTime } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,15 @@ export default async function AdminDashboardPage() {
   const pending = todays.filter((b) => b.status === "pending").length;
   const done = todays.filter((b) => b.status === "done").length;
 
+  // Next 12 slots from today onward — open ones in green, booked in red.
+  const now = new Date();
+  const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
+    now.getMinutes()
+  ).padStart(2, "0")}`;
+  const upcomingSlots = slots
+    .filter((s) => s.date > today || (s.date === today && s.time >= currentTime))
+    .slice(0, 12);
+
   return (
     <div>
       <h1 className="text-xl font-bold text-brand-blue mb-1">Today</h1>
@@ -45,29 +55,82 @@ export default async function AdminDashboardPage() {
         })}
       </p>
 
-      <div className="grid grid-cols-3 gap-3 mb-5">
+      <div className="grid grid-cols-3 gap-3 mb-6">
         <Stat label="Total" value={todays.length} accent="blue" />
         <Stat label="Pending" value={pending} accent="yellow" />
         <Stat label="Done" value={done} accent="green" />
       </div>
 
-      {todays.length === 0 ? (
-        <EmptyState
-          title="No bookings today"
-          hint="New bookings will show up here automatically."
-        />
-      ) : (
-        <ul className="space-y-3">
-          {todays.map((b) => (
-            <li key={b.id}>
-              <BookingRow
-                booking={b}
-                service={serviceById.get(b.serviceId)}
-                slot={slotById.get(b.slotId)}
-              />
-            </li>
-          ))}
-        </ul>
+      {/* TODAY'S BOOKINGS */}
+      <section className="mb-7">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+          Today's bookings
+        </h2>
+        {todays.length === 0 ? (
+          <EmptyState
+            title="No bookings today"
+            hint="New bookings will show up here automatically."
+          />
+        ) : (
+          <ul className="space-y-3">
+            {todays.map((b) => (
+              <li key={b.id}>
+                <BookingRow
+                  booking={b}
+                  service={serviceById.get(b.serviceId)}
+                  slot={slotById.get(b.slotId)}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* UPCOMING SLOTS */}
+      {upcomingSlots.length > 0 && (
+        <section>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+            Next slots
+          </h2>
+          <div className="card !p-3">
+            <div className="flex items-center gap-3 text-[11px] text-gray-600 mb-3">
+              <span className="inline-flex items-center gap-1">
+                <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
+                Open
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
+                Booked
+              </span>
+            </div>
+            <ul className="grid grid-cols-2 gap-2">
+              {upcomingSlots.map((s) => {
+                const open = s.isOpen;
+                return (
+                  <li
+                    key={s.id}
+                    className={`rounded-lg border-l-4 px-3 py-2 ${
+                      open
+                        ? "border-green-500 bg-green-50"
+                        : "border-red-500 bg-red-50"
+                    }`}
+                  >
+                    <p className="text-[10px] uppercase tracking-wider text-gray-600">
+                      {formatDateLong(s.date)}
+                    </p>
+                    <p
+                      className={`text-sm font-bold ${
+                        open ? "text-green-800" : "text-red-700"
+                      }`}
+                    >
+                      {formatTime(s.time)}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </section>
       )}
     </div>
   );
@@ -90,7 +153,9 @@ function Stat({
   return (
     <div className={`rounded-2xl p-4 ${colors[accent]}`}>
       <p className="text-2xl font-extrabold leading-none">{value}</p>
-      <p className="text-xs uppercase tracking-wider mt-2 opacity-90">{label}</p>
+      <p className="text-xs uppercase tracking-wider mt-2 opacity-90">
+        {label}
+      </p>
     </div>
   );
 }

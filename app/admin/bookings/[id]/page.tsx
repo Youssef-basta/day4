@@ -64,19 +64,29 @@ export default async function AdminBookingDetailPage({
       </Link>
 
       <div className="card">
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-lg font-bold text-brand-blue">
-            {booking.customerName}
-          </h1>
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="min-w-0">
+            <h1 className="text-xl font-extrabold text-brand-blue truncate">
+              {booking.customerName}
+            </h1>
+            <a
+              href={`tel:${booking.phone}`}
+              className="text-sm font-semibold text-brand-blue underline-offset-2 hover:underline"
+            >
+              {booking.phone}
+            </a>
+          </div>
           <StatusChip
             status={booking.status}
             reason={booking.cancellationReason}
           />
         </div>
-        <div className="mb-3">
+        <div className="mb-3 flex items-center gap-2">
           <PaymentBadge booking={booking} />
+          <span className="font-mono text-[11px] text-gray-400">
+            {booking.ref}
+          </span>
         </div>
-        <p className="font-mono text-xs text-gray-400 mb-4">{booking.ref}</p>
 
         <dl className="space-y-2 text-sm">
           <Field label="Service" value={service?.name ?? "—"} />
@@ -119,7 +129,6 @@ export default async function AdminBookingDetailPage({
                   } (paid)`
             }
           />
-          <Field label="Phone" value={booking.phone} />
           {booking.notes && <Field label="Notes" value={booking.notes} />}
           <Field
             label="Booked at"

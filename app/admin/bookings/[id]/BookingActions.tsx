@@ -53,16 +53,18 @@ export function BookingActions({ booking }: { booking: Booking }) {
           <button
             onClick={cancel}
             disabled={pending}
-            className="btn-outline flex-1"
+            className="btn-danger flex-1"
+            aria-label="Cancel booking"
           >
-            Cancel
+            ✕ Cancel
           </button>
           <button
             onClick={markDone}
             disabled={pending}
-            className="btn-accent flex-1"
+            className="btn-success flex-1"
+            aria-label="Mark booking as done"
           >
-            {pending ? "Saving…" : "Mark as Done"}
+            {pending ? "Saving…" : "✓ Mark as Done"}
           </button>
         </div>
       )}

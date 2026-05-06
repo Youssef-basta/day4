@@ -1,10 +1,10 @@
 import {
   getAddons,
   getDrinks,
-  getOpenSlots,
   getServices,
   getStudioSettings,
 } from "@/lib/db/catalog";
+import { getUpcomingSlots } from "@/lib/db/admin";
 import { BookingWizard } from "./BookingWizard";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ export default async function BookPage() {
     getServices(),
     getAddons(),
     getDrinks(),
-    getOpenSlots(),
+    getUpcomingSlots(14),
     getStudioSettings(),
   ]);
   return (

@@ -38,6 +38,7 @@ export function BookingWizard({
   const [slotId, setSlotId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const [notes, setNotes] = useState("");
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
@@ -67,6 +68,14 @@ export function BookingWizard({
         drinks: [],
         service: undefined,
       };
+
+  // Kuwait local mobile numbers are 8 digits.
+  const phoneDigits = phone.replace(/\D/g, "");
+  const phoneValid = phoneDigits.length === 8;
+  const phoneError =
+    phoneTouched && phone.length > 0 && !phoneValid
+      ? "Phone must be 8 digits."
+      : null;
 
   function toggleAddon(id: string) {
     setAddonIds((prev) =>
@@ -98,6 +107,8 @@ export function BookingWizard({
     }
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
   }, [slots]);
+
+  const hasAnyOpen = slots.some((s) => s.isOpen);
 
   function paymentReady(): boolean {
     if (!paymentMethod) return false;
@@ -142,7 +153,7 @@ export function BookingWizard({
           drinkOrders,
           slotId,
           customerName: name.trim(),
-          phone: phone.trim(),
+          phone: `+965${phoneDigits}`,
           notes: notes.trim() || undefined,
           paymentMethod,
           cardLast4: last4,
@@ -293,39 +304,60 @@ export function BookingWizard({
             <h1 className="text-xl font-bold text-brand-blue mb-3">
               Pick a time
             </h1>
-            {slotsByDate.length === 0 ? (
+            {!hasAnyOpen ? (
               <p className="card text-sm text-gray-600">
                 No open time slots right now. Please check back later.
               </p>
             ) : (
-              <div className="space-y-5">
-                {slotsByDate.map(([date, daySlots]) => (
-                  <div key={date}>
-                    <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">
-                      {formatDateLong(date)}
-                    </p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {daySlots.map((s) => {
-                        const selected = slotId === s.id;
-                        return (
-                          <button
-                            key={s.id}
-                            type="button"
-                            onClick={() => setSlotId(s.id)}
-                            className={`rounded-xl border px-2 py-3 text-sm font-semibold transition ${
-                              selected
-                                ? "bg-brand-blue text-white border-brand-blue"
-                                : "bg-white border-gray-200 text-gray-800"
-                            }`}
-                          >
-                            {formatTime(s.time)}
-                          </button>
-                        );
-                      })}
+              <>
+                <div className="flex items-center gap-3 text-[11px] text-gray-600 mb-3">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="h-3 w-3 rounded-full bg-green-500" />
+                    Available
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="h-3 w-3 rounded-full bg-red-500" />
+                    Booked
+                  </span>
+                </div>
+                <div className="space-y-5">
+                  {slotsByDate.map(([date, daySlots]) => (
+                    <div key={date}>
+                      <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">
+                        {formatDateLong(date)}
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {daySlots.map((s) => {
+                          const selected = slotId === s.id;
+                          const booked = !s.isOpen;
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => !booked && setSlotId(s.id)}
+                              disabled={booked}
+                              aria-label={
+                                booked
+                                  ? `${formatTime(s.time)} — booked`
+                                  : `${formatTime(s.time)} — available`
+                              }
+                              className={`rounded-xl border-2 px-2 py-3 text-sm font-semibold transition ${
+                                booked
+                                  ? "bg-red-50 border-red-200 text-red-400 line-through cursor-not-allowed"
+                                  : selected
+                                  ? "bg-brand-blue text-white border-brand-blue"
+                                  : "bg-green-50 border-green-300 text-green-800"
+                              }`}
+                            >
+                              {formatTime(s.time)}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </>
             )}
           </section>
         )}
@@ -377,7 +409,8 @@ export function BookingWizard({
               id="step4-form"
               onSubmit={(e) => {
                 e.preventDefault();
-                if (!name.trim() || !phone.trim()) return;
+                setPhoneTouched(true);
+                if (!name.trim() || !phoneValid) return;
                 setStep(5);
               }}
               className="space-y-4"
@@ -398,15 +431,36 @@ export function BookingWizard({
                 <label className="block text-sm font-semibold mb-1">
                   Phone number
                 </label>
-                <input
-                  className="input"
-                  type="tel"
-                  inputMode="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder={phonePlaceholder}
-                  required
-                />
+                <div className="flex items-stretch rounded-xl border border-gray-300 focus-within:ring-2 focus-within:ring-brand-blue overflow-hidden">
+                  <span className="px-3 py-3 bg-gray-50 text-gray-600 text-sm font-semibold border-r border-gray-300 select-none">
+                    +965
+                  </span>
+                  <input
+                    className="flex-1 px-4 py-3 text-base focus:outline-none"
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel-national"
+                    pattern="[0-9]{8}"
+                    maxLength={8}
+                    value={phone}
+                    onChange={(e) =>
+                      setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))
+                    }
+                    onBlur={() => setPhoneTouched(true)}
+                    placeholder="Enter 8-digit number"
+                    aria-invalid={Boolean(phoneError)}
+                    required
+                  />
+                </div>
+                {phoneError ? (
+                  <p className="text-xs text-red-600 font-semibold mt-1">
+                    {phoneError}
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Example: 50001234
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1">
@@ -789,7 +843,7 @@ export function BookingWizard({
                 type="button"
                 onClick={handlePayAndConfirm}
                 disabled={!paymentMethod || isPending}
-                className="btn-accent flex-1"
+                className="btn-primary flex-1"
               >
                 {isPending
                   ? "Processing…"

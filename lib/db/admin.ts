@@ -37,6 +37,27 @@ export async function getAllSlots(): Promise<Slot[]> {
   return (data ?? []).map(mapSlot);
 }
 
+// Upcoming slots (open + booked) for the customer slot picker — shows
+// booked ones grayed/red so users see real availability. Limited to the
+// next 14 days to keep the grid manageable.
+export async function getUpcomingSlots(daysAhead = 14): Promise<Slot[]> {
+  const supabase = createAdminClient();
+  const start = new Date();
+  const end = new Date();
+  end.setDate(start.getDate() + daysAhead);
+  const startKey = start.toISOString().slice(0, 10);
+  const endKey = end.toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from("slots")
+    .select("*")
+    .gte("date", startKey)
+    .lte("date", endKey)
+    .order("date", { ascending: true })
+    .order("time", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapSlot);
+}
+
 export async function getServicesAdmin(): Promise<Service[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase

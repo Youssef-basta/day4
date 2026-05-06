@@ -78,8 +78,16 @@ export default async function ConfirmationPage({
             We&apos;ll see you soon, {booking.customerName.split(" ")[0]}.
           </p>
 
-          <div className="mt-5 rounded-xl bg-gray-50 px-4 py-4 text-left text-sm">
-            <Row label="Reference" value={booking.ref} mono />
+          <div className="mt-5 rounded-2xl bg-brand-blue text-white px-4 py-4">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-brand-yellow font-semibold">
+              Your booking ID
+            </p>
+            <p className="font-mono font-extrabold text-2xl mt-1 tracking-wider">
+              {booking.ref}
+            </p>
+          </div>
+
+          <div className="mt-3 rounded-xl bg-gray-50 px-4 py-4 text-left text-sm">
             <Row label="Service" value={service?.name ?? "—"} />
             {totals.addons.length > 0 && (
               <Row
@@ -127,7 +135,7 @@ export default async function ConfirmationPage({
           </h2>
           <ol className="card space-y-3 text-sm list-decimal list-inside">
             <li>Save your reference: <span className="font-semibold">{booking.ref}</span></li>
-            <li>Arrive 5 minutes early at the studio.</li>
+            <li>Arrive 10 minutes early at the studio.</li>
             <li>Show the reference at the counter.</li>
             {booking.paymentMethod === "cash" && (
               <li className="text-orange-700 font-semibold">

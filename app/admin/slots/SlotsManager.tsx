@@ -45,14 +45,27 @@ export function SlotsManager({
   return (
     <div>
       <h1 className="text-xl font-bold text-brand-blue mb-1">Slot manager</h1>
-      <p className="text-sm text-gray-500 mb-4">
-        Tap a slot to open or close it. Booked slots are locked.
+      <p className="text-sm text-gray-500 mb-3">
+        Open or close any slot. Booked slots are locked until the booking
+        ends.
       </p>
 
-      <div className="space-y-5">
+      <div className="card flex items-center justify-around text-[11px] mb-4">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-3 w-3 rounded-full bg-green-500" /> Open
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-3 w-3 rounded-full bg-red-500" /> Closed
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-3 w-3 rounded-full bg-gray-400" /> Booked
+        </span>
+      </div>
+
+      <div className="space-y-6">
         {grouped.map(([date, daySlots]) => (
           <section key={date}>
-            <h2 className="text-xs uppercase tracking-wider text-gray-500 mb-2">
+            <h2 className="text-xs uppercase tracking-wider text-gray-500 mb-2 font-semibold">
               {formatDateLong(date)}
             </h2>
             <div className="grid grid-cols-3 gap-2">
@@ -60,24 +73,49 @@ export function SlotsManager({
                 const booked = bookedSlotIds.has(s.id);
                 const open = s.isOpen;
                 const busy = isPending && pendingId === s.id;
+
+                if (booked) {
+                  return (
+                    <div
+                      key={s.id}
+                      className="rounded-xl border-2 border-gray-200 bg-gray-100 text-gray-500 px-2 py-2 text-center cursor-not-allowed"
+                      aria-label={`${formatTime(s.time)} — booked`}
+                    >
+                      <p className="text-sm font-bold">{formatTime(s.time)}</p>
+                      <p className="text-[10px] uppercase mt-0.5">Booked</p>
+                    </div>
+                  );
+                }
+
                 return (
                   <button
                     key={s.id}
                     type="button"
-                    disabled={booked || busy}
+                    disabled={busy}
                     onClick={() => toggle(s.id)}
-                    className={`rounded-xl border px-2 py-3 text-sm font-semibold transition ${
-                      booked
-                        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                        : open
-                        ? "bg-white border-brand-blue text-brand-blue"
-                        : "bg-gray-200 text-gray-500 border-gray-200 line-through"
+                    aria-label={
+                      open
+                        ? `${formatTime(s.time)} is open — close it`
+                        : `${formatTime(s.time)} is closed — open it`
+                    }
+                    className={`rounded-xl border-2 px-2 py-2 text-center transition active:scale-[.97] ${
+                      open
+                        ? "bg-green-50 border-green-500 text-green-800"
+                        : "bg-red-50 border-red-300 text-red-700"
                     } ${busy ? "opacity-50" : ""}`}
                   >
-                    {formatTime(s.time)}
-                    <span className="block text-[10px] font-normal mt-0.5 opacity-70">
-                      {booked ? "Booked" : open ? "Open" : "Closed"}
-                    </span>
+                    <p className="text-sm font-bold">{formatTime(s.time)}</p>
+                    <p
+                      className={`text-[10px] uppercase mt-0.5 font-bold ${
+                        open ? "text-green-700" : "text-red-600"
+                      }`}
+                    >
+                      {open ? (
+                        <span>Tap to Close</span>
+                      ) : (
+                        <span>Tap to Open</span>
+                      )}
+                    </p>
                   </button>
                 );
               })}
