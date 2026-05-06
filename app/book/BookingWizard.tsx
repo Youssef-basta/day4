@@ -4,20 +4,29 @@ import { useMemo, useState, useTransition } from "react";
 import { BrandHeader } from "@/components/BrandHeader";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { bookingTotals } from "@/lib/pricing";
-import type { Addon, PaymentMethod, Service, Slot } from "@/lib/types";
+import type {
+  Addon,
+  Drink,
+  DrinkOrder,
+  PaymentMethod,
+  Service,
+  Slot,
+} from "@/lib/types";
 import { createBookingAction } from "./actions";
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 export function BookingWizard({
   services,
   addons,
+  drinks,
   slots,
   brandName,
   phonePlaceholder,
 }: {
   services: Service[];
   addons: Addon[];
+  drinks: Drink[];
   slots: Slot[];
   brandName: string;
   phonePlaceholder: string;
@@ -25,6 +34,7 @@ export function BookingWizard({
   const [step, setStep] = useState<Step>(1);
   const [serviceId, setServiceId] = useState<string | null>(null);
   const [addonIds, setAddonIds] = useState<string[]>([]);
+  const [drinkOrders, setDrinkOrders] = useState<DrinkOrder[]>([]);
   const [slotId, setSlotId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -44,14 +54,40 @@ export function BookingWizard({
   const slot = slots.find((s) => s.id === slotId);
 
   const totals = serviceId
-    ? bookingTotals({ serviceId, addonIds }, services, addons)
-    : { priceKwd: 0, durationMin: 0, addons: [], service: undefined };
+    ? bookingTotals(
+        { serviceId, addonIds, drinkOrders },
+        services,
+        addons,
+        drinks
+      )
+    : {
+        priceKwd: 0,
+        durationMin: 0,
+        addons: [],
+        drinks: [],
+        service: undefined,
+      };
 
   function toggleAddon(id: string) {
     setAddonIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   }
+
+  function setDrinkQty(id: string, qty: number) {
+    const next = Math.max(0, Math.min(9, qty));
+    setDrinkOrders((prev) => {
+      const without = prev.filter((d) => d.id !== id);
+      return next === 0 ? without : [...without, { id, qty: next }];
+    });
+  }
+
+  function getDrinkQty(id: string) {
+    return drinkOrders.find((d) => d.id === id)?.qty ?? 0;
+  }
+
+  const hotDrinks = drinks.filter((d) => d.temperature === "hot");
+  const coldDrinks = drinks.filter((d) => d.temperature === "cold");
 
   const slotsByDate = useMemo(() => {
     const map = new Map<string, Slot[]>();
@@ -103,6 +139,7 @@ export function BookingWizard({
         const res = await createBookingAction({
           serviceId,
           addonIds,
+          drinkOrders,
           slotId,
           customerName: name.trim(),
           phone: phone.trim(),
@@ -295,15 +332,53 @@ export function BookingWizard({
 
         {step === 3 && (
           <section>
+            <h1 className="text-xl font-bold text-brand-blue mb-1">
+              Refreshments
+            </h1>
+            <p className="text-xs text-gray-500 mb-4">
+              Optional — hot or cold drinks ready when you sit down.
+            </p>
+
+            {drinks.length === 0 ? (
+              <p className="card text-sm text-gray-600">
+                No drinks available right now.
+              </p>
+            ) : (
+              <>
+                {hotDrinks.length > 0 && (
+                  <DrinkGroup
+                    label="Hot"
+                    accent="bg-orange-100 text-orange-700"
+                    drinks={hotDrinks}
+                    getQty={getDrinkQty}
+                    setQty={setDrinkQty}
+                  />
+                )}
+                {coldDrinks.length > 0 && (
+                  <DrinkGroup
+                    label="Cold"
+                    accent="bg-sky-100 text-sky-700"
+                    drinks={coldDrinks}
+                    getQty={getDrinkQty}
+                    setQty={setDrinkQty}
+                  />
+                )}
+              </>
+            )}
+          </section>
+        )}
+
+        {step === 4 && (
+          <section>
             <h1 className="text-xl font-bold text-brand-blue mb-3">
               Your details
             </h1>
             <form
-              id="step3-form"
+              id="step4-form"
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!name.trim() || !phone.trim()) return;
-                setStep(4);
+                setStep(5);
               }}
               className="space-y-4"
             >
@@ -348,7 +423,7 @@ export function BookingWizard({
           </section>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <section>
             <h1 className="text-xl font-bold text-brand-blue mb-3">
               Payment
@@ -367,6 +442,17 @@ export function BookingWizard({
                 >
                   <span>+ {a.name}</span>
                   <span>+{a.priceKwd} KWD</span>
+                </div>
+              ))}
+              {totals.drinks.map((l) => (
+                <div
+                  key={l.drink.id}
+                  className="flex justify-between text-gray-600 text-xs mt-1"
+                >
+                  <span>
+                    {l.qty}× {l.drink.name}
+                  </span>
+                  <span>+{l.subtotal} KWD</span>
                 </div>
               ))}
               <div className="border-t border-gray-200 mt-2 pt-2 flex justify-between text-sm">
@@ -615,8 +701,14 @@ export function BookingWizard({
         {step === 3 && (
           <>
             <SummaryLine>
-              <span className="text-gray-500">
-                {totals.durationMin} min · {service?.name ?? ""}
+              <span className="text-gray-500 truncate">
+                {totals.drinks.length === 0
+                  ? "No drinks · skip if you'd rather not"
+                  : `${totals.drinks.reduce((s, l) => s + l.qty, 0)} drink${
+                      totals.drinks.reduce((s, l) => s + l.qty, 0) > 1
+                        ? "s"
+                        : ""
+                    }`}
               </span>
               <span className="font-extrabold text-brand-blue whitespace-nowrap">
                 {totals.priceKwd} KWD
@@ -631,8 +723,37 @@ export function BookingWizard({
                 Back
               </button>
               <button
+                type="button"
+                onClick={() => setStep(4)}
+                className="btn-primary flex-1"
+              >
+                {totals.drinks.length === 0 ? "Skip" : "Continue"}
+              </button>
+            </div>
+          </>
+        )}
+
+        {step === 4 && (
+          <>
+            <SummaryLine>
+              <span className="text-gray-500">
+                {totals.durationMin} min · {service?.name ?? ""}
+              </span>
+              <span className="font-extrabold text-brand-blue whitespace-nowrap">
+                {totals.priceKwd} KWD
+              </span>
+            </SummaryLine>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setStep(3)}
+                className="btn-outline flex-1"
+              >
+                Back
+              </button>
+              <button
                 type="submit"
-                form="step3-form"
+                form="step4-form"
                 className="btn-primary flex-1"
               >
                 Continue
@@ -641,7 +762,7 @@ export function BookingWizard({
           </>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <>
             <SummaryLine>
               <span className="text-gray-500 truncate">
@@ -658,7 +779,7 @@ export function BookingWizard({
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setStep(3)}
+                onClick={() => setStep(4)}
                 disabled={isPending}
                 className="btn-outline flex-1"
               >
@@ -699,6 +820,86 @@ function SummaryLine({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3 text-xs">
       {children}
+    </div>
+  );
+}
+
+function DrinkGroup({
+  label,
+  accent,
+  drinks,
+  getQty,
+  setQty,
+}: {
+  label: string;
+  accent: string;
+  drinks: Drink[];
+  getQty: (id: string) => number;
+  setQty: (id: string, qty: number) => void;
+}) {
+  return (
+    <div className="mb-4">
+      <p
+        className={`chip ${accent} mb-2 text-[10px] uppercase tracking-wider`}
+      >
+        {label}
+      </p>
+      <ul className="space-y-2">
+        {drinks.map((d) => {
+          const qty = getQty(d.id);
+          return (
+            <li
+              key={d.id}
+              className={`card !py-3 flex items-center gap-3 ${
+                qty > 0 ? "ring-2 ring-brand-blue bg-brand-blue/[0.03]" : ""
+              }`}
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold leading-tight">{d.name}</p>
+                {d.description && (
+                  <p className="text-[11px] text-gray-500 leading-tight">
+                    {d.description}
+                  </p>
+                )}
+                <p className="text-xs font-bold text-brand-blue mt-0.5">
+                  {d.priceKwd === 0 ? "Free" : `${d.priceKwd} KWD`}
+                </p>
+              </div>
+              {qty === 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setQty(d.id, 1)}
+                  className="rounded-xl border-2 border-brand-blue text-brand-blue font-bold text-xs px-3 py-1.5"
+                >
+                  + Add
+                </button>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setQty(d.id, qty - 1)}
+                    aria-label="Decrease"
+                    className="h-8 w-8 rounded-full bg-gray-100 text-brand-blue font-bold text-lg leading-none flex items-center justify-center"
+                  >
+                    −
+                  </button>
+                  <span className="w-6 text-center text-sm font-bold tabular-nums">
+                    {qty}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setQty(d.id, qty + 1)}
+                    aria-label="Increase"
+                    className="h-8 w-8 rounded-full bg-brand-blue text-white font-bold text-lg leading-none flex items-center justify-center"
+                  >
+                    +
+                  </button>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
@@ -757,39 +958,44 @@ function formatExpiry(v: string) {
 }
 
 function Stepper({ step }: { step: Step }) {
-  const labels = ["Service", "Time", "Details", "Pay"];
+  const labels = ["Service", "Time", "Drinks", "Details", "Pay"];
   return (
-    <ol className="flex items-center gap-2 mb-6">
-      {labels.map((label, i) => {
-        const n = (i + 1) as Step;
-        const active = n === step;
-        const done = n < step;
-        return (
-          <li key={label} className="flex items-center gap-2 flex-1">
-            <span
-              className={`h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${
-                active
-                  ? "bg-brand-blue text-white"
-                  : done
-                  ? "bg-brand-yellow text-brand-blue"
-                  : "bg-gray-200 text-gray-500"
+    <div className="mb-6">
+      <ol className="flex items-center gap-1.5">
+        {labels.map((label, i) => {
+          const n = (i + 1) as Step;
+          const active = n === step;
+          const done = n < step;
+          return (
+            <li
+              key={label}
+              className={`flex items-center ${active ? "" : "shrink-0"} ${
+                i < labels.length - 1 ? "flex-1" : ""
               }`}
             >
-              {n}
-            </span>
-            <span
-              className={`text-[11px] font-semibold ${
-                active ? "text-brand-blue" : "text-gray-500"
-              }`}
-            >
-              {label}
-            </span>
-            {i < labels.length - 1 && (
-              <span className="flex-1 h-px bg-gray-200" />
-            )}
-          </li>
-        );
-      })}
-    </ol>
+              <span
+                className={`h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${
+                  active
+                    ? "bg-brand-blue text-white"
+                    : done
+                    ? "bg-brand-yellow text-brand-blue"
+                    : "bg-gray-200 text-gray-500"
+                }`}
+              >
+                {n}
+              </span>
+              {active && (
+                <span className="ml-2 text-[11px] font-semibold text-brand-blue">
+                  {label}
+                </span>
+              )}
+              {i < labels.length - 1 && (
+                <span className="flex-1 h-px bg-gray-200 ml-2" />
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }

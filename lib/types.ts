@@ -29,6 +29,21 @@ export type BookingStatus = "pending" | "done" | "cancelled";
 export type PaymentMethod = "visa" | "knet" | "cash";
 export type PaymentStatus = "paid" | "unpaid";
 
+export type DrinkTemperature = "hot" | "cold";
+
+export type Drink = {
+  id: string;
+  name: string;
+  description?: string;
+  priceKwd: number;
+  temperature: DrinkTemperature;
+};
+
+export type DrinkOrder = {
+  id: string;
+  qty: number;
+};
+
 export type CancellationReason = "admin" | "no_show";
 
 export type StudioSettings = {
@@ -74,5 +89,6 @@ export type Booking = {
   paymentStatus: PaymentStatus;
   cardLast4?: string;
   cancellationReason?: CancellationReason;
+  drinkOrders: DrinkOrder[];
   createdAt: string;
 };

@@ -4,7 +4,11 @@ import { formatDateLong, formatTime } from "@/lib/format";
 import { bookingTotals } from "@/lib/pricing";
 import { methodLabel } from "@/components/PaymentBadge";
 import { getBookingById } from "@/lib/db/admin";
-import { getServicesAdmin, getAddonsAdmin } from "@/lib/db/admin";
+import {
+  getServicesAdmin,
+  getAddonsAdmin,
+  getDrinksAdmin,
+} from "@/lib/db/admin";
 import { getStudioSettings } from "@/lib/db/catalog";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapSlot } from "@/lib/db/map";
@@ -50,13 +54,14 @@ export default async function ConfirmationPage({
     );
   }
 
-  const [services, addons, slot] = await Promise.all([
+  const [services, addons, drinks, slot] = await Promise.all([
     getServicesAdmin(),
     getAddonsAdmin(),
+    getDrinksAdmin(),
     getSlotById(booking.slotId),
   ]);
   const service = services.find((s) => s.id === booking.serviceId);
-  const totals = bookingTotals(booking, services, addons);
+  const totals = bookingTotals(booking, services, addons, drinks);
 
   return (
     <>
@@ -80,6 +85,14 @@ export default async function ConfirmationPage({
               <Row
                 label="Add-ons"
                 value={totals.addons.map((a) => a.name).join(", ")}
+              />
+            )}
+            {totals.drinks.length > 0 && (
+              <Row
+                label="Drinks"
+                value={totals.drinks
+                  .map((l) => `${l.qty}× ${l.drink.name}`)
+                  .join(", ")}
               />
             )}
             <Row

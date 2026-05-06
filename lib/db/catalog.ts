@@ -2,6 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import {
   mapAddon,
+  mapDrink,
   mapService,
   mapSlot,
   mapStudioSettings,
@@ -9,6 +10,7 @@ import {
 } from "./map";
 import type {
   Addon,
+  Drink,
   Service,
   Slot,
   StudioSettings,
@@ -38,6 +40,18 @@ export async function getAddons(): Promise<Addon[]> {
     .order("sort_order", { ascending: true });
   if (error) throw error;
   return (data ?? []).map(mapAddon);
+}
+
+export async function getDrinks(): Promise<Drink[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("drinks")
+    .select("*")
+    .eq("is_active", true)
+    .order("temperature", { ascending: true })
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapDrink);
 }
 
 export async function getStudioSettings(): Promise<StudioSettings> {

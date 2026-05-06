@@ -3,13 +3,14 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { mapBooking } from "@/lib/db/map";
-import type { PaymentMethod } from "@/lib/types";
+import type { DrinkOrder, PaymentMethod } from "@/lib/types";
 
 export type CreateBookingInput = {
   customerName: string;
   phone: string;
   serviceId: string;
   addonIds: string[];
+  drinkOrders: DrinkOrder[];
   slotId: string;
   notes?: string;
   paymentMethod: PaymentMethod;
@@ -33,6 +34,7 @@ export async function createBookingAction(
     p_notes: input.notes ?? null,
     p_payment_method: input.paymentMethod,
     p_card_last4: input.cardLast4 ?? null,
+    p_drink_orders: input.drinkOrders.filter((d) => d.qty > 0),
   });
 
   if (error) {

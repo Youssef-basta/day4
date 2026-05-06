@@ -6,6 +6,7 @@ import { bookingTotals } from "@/lib/pricing";
 import {
   getAddonsAdmin,
   getBookingById,
+  getDrinksAdmin,
   getServicesAdmin,
 } from "@/lib/db/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -44,13 +45,14 @@ export default async function AdminBookingDetailPage({
     );
   }
 
-  const [services, addons, slot] = await Promise.all([
+  const [services, addons, drinks, slot] = await Promise.all([
     getServicesAdmin(),
     getAddonsAdmin(),
+    getDrinksAdmin(),
     getSlotById(booking.slotId),
   ]);
   const service = services.find((s) => s.id === booking.serviceId);
-  const totals = bookingTotals(booking, services, addons);
+  const totals = bookingTotals(booking, services, addons, drinks);
 
   return (
     <div>
@@ -83,6 +85,14 @@ export default async function AdminBookingDetailPage({
               label="Add-ons"
               value={totals.addons
                 .map((a) => `${a.name} (+${a.priceKwd})`)
+                .join(", ")}
+            />
+          )}
+          {totals.drinks.length > 0 && (
+            <Field
+              label="Drinks"
+              value={totals.drinks
+                .map((l) => `${l.qty}× ${l.drink.name}`)
                 .join(", ")}
             />
           )}
@@ -124,6 +134,7 @@ export default async function AdminBookingDetailPage({
         booking={booking}
         services={services}
         addons={addons}
+        drinks={drinks}
       />
 
       {booking.status === "done" && (

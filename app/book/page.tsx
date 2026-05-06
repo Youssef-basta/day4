@@ -1,5 +1,6 @@
 import {
   getAddons,
+  getDrinks,
   getOpenSlots,
   getServices,
   getStudioSettings,
@@ -9,9 +10,10 @@ import { BookingWizard } from "./BookingWizard";
 export const dynamic = "force-dynamic";
 
 export default async function BookPage() {
-  const [services, addons, slots, settings] = await Promise.all([
+  const [services, addons, drinks, slots, settings] = await Promise.all([
     getServices(),
     getAddons(),
+    getDrinks(),
     getOpenSlots(),
     getStudioSettings(),
   ]);
@@ -19,6 +21,7 @@ export default async function BookPage() {
     <BookingWizard
       services={services}
       addons={addons}
+      drinks={drinks}
       slots={slots}
       brandName={settings.brandName}
       phonePlaceholder={settings.phonePlaceholder ?? "+965 5000 0000"}

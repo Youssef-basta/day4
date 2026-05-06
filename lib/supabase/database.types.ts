@@ -73,6 +73,7 @@ export type Database = {
           card_last4: string | null
           created_at: string
           customer_name: string
+          drink_orders: { id: string; qty: number }[]
           id: string
           notes: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
@@ -89,6 +90,7 @@ export type Database = {
           card_last4?: string | null
           created_at?: string
           customer_name: string
+          drink_orders?: { id: string; qty: number }[]
           id?: string
           notes?: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
@@ -105,6 +107,7 @@ export type Database = {
           card_last4?: string | null
           created_at?: string
           customer_name?: string
+          drink_orders?: { id: string; qty: number }[]
           id?: string
           notes?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
@@ -159,6 +162,36 @@ export type Database = {
           price_kwd?: number
           sort_order?: number
           tier?: Database["public"]["Enums"]["service_tier"] | null
+        }
+        Relationships: []
+      }
+      drinks: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          price_kwd: number
+          temperature: Database["public"]["Enums"]["drink_temperature"]
+          sort_order: number
+          is_active: boolean
+        }
+        Insert: {
+          id: string
+          name: string
+          description?: string | null
+          price_kwd: number
+          temperature: Database["public"]["Enums"]["drink_temperature"]
+          sort_order?: number
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          price_kwd?: number
+          temperature?: Database["public"]["Enums"]["drink_temperature"]
+          sort_order?: number
+          is_active?: boolean
         }
         Relationships: []
       }
@@ -292,6 +325,7 @@ export type Database = {
           p_addon_ids: string[]
           p_card_last4: string
           p_customer_name: string
+          p_drink_orders?: { id: string; qty: number }[]
           p_notes: string
           p_payment_method: Database["public"]["Enums"]["payment_method"]
           p_phone: string
@@ -303,6 +337,7 @@ export type Database = {
           card_last4: string | null
           created_at: string
           customer_name: string
+          drink_orders: { id: string; qty: number }[]
           id: string
           notes: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
@@ -324,6 +359,7 @@ export type Database = {
     }
     Enums: {
       booking_status: "pending" | "done" | "cancelled"
+      drink_temperature: "hot" | "cold"
       payment_method: "visa" | "knet" | "cash"
       payment_status: "paid" | "unpaid"
       service_tier: "standard" | "premium" | "signature"

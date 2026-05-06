@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { BookingStatus } from "@/lib/types";
+import type { BookingStatus, DrinkOrder } from "@/lib/types";
 
 export async function updateBookingStatusAction(
   bookingId: string,
@@ -52,7 +52,11 @@ export async function markPaidAction(bookingId: string) {
 
 export async function updateBookingExtrasAction(
   bookingId: string,
-  input: { serviceId: string; addonIds: string[] }
+  input: {
+    serviceId: string;
+    addonIds: string[];
+    drinkOrders?: DrinkOrder[];
+  }
 ) {
   const supabase = createAdminClient();
 
@@ -76,11 +80,27 @@ export async function updateBookingExtrasAction(
     }
   }
 
+  const cleanedDrinks = (input.drinkOrders ?? [])
+    .filter((d) => d && typeof d.id === "string" && d.qty > 0)
+    .map((d) => ({ id: d.id, qty: Math.min(99, Math.floor(d.qty)) }));
+  if (cleanedDrinks.length > 0) {
+    const ids = Array.from(new Set(cleanedDrinks.map((d) => d.id)));
+    const { data: validDrinks, error: drinkErr } = await supabase
+      .from("drinks")
+      .select("id")
+      .in("id", ids);
+    if (drinkErr) throw drinkErr;
+    if ((validDrinks?.length ?? 0) !== ids.length) {
+      throw new Error("One or more drinks do not exist");
+    }
+  }
+
   const { error } = await supabase
     .from("bookings")
     .update({
       service_id: input.serviceId,
       addon_ids: cleanedAddons,
+      drink_orders: cleanedDrinks,
     })
     .eq("id", bookingId);
   if (error) throw error;

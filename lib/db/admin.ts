@@ -1,7 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { mapBooking, mapService, mapAddon, mapSlot } from "./map";
-import type { Booking, Service, Addon, Slot } from "@/lib/types";
+import { mapBooking, mapService, mapAddon, mapDrink, mapSlot } from "./map";
+import type { Booking, Service, Addon, Drink, Slot } from "@/lib/types";
 
 export async function getAllBookings(): Promise<Booking[]> {
   const supabase = createAdminClient();
@@ -55,4 +55,15 @@ export async function getAddonsAdmin(): Promise<Addon[]> {
     .order("sort_order", { ascending: true });
   if (error) throw error;
   return (data ?? []).map(mapAddon);
+}
+
+export async function getDrinksAdmin(): Promise<Drink[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("drinks")
+    .select("*")
+    .order("temperature", { ascending: true })
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapDrink);
 }
