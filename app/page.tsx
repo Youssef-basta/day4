@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { BrandHeader } from "@/components/BrandHeader";
 import { BarberPole } from "@/components/BarberPole";
-import { StudioCard } from "@/components/StudioCard";
 import {
   ScissorsIcon,
   RazorIcon,
@@ -24,11 +23,12 @@ import {
 } from "@/components/icons";
 import {
   getAddons,
+  getDrinks,
   getServices,
   getStudioSettings,
   getTestimonials,
 } from "@/lib/db/catalog";
-import type { Service, Testimonial } from "@/lib/types";
+import type { Drink, Service, Testimonial } from "@/lib/types";
 
 const SERVICE_ICONS: Record<string, typeof ScissorsIcon> = {
   haircut: ScissorsIcon,
@@ -52,12 +52,16 @@ const ADDON_ICONS: Record<string, typeof ScissorsIcon> = {
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [services, addons, settings, testimonials] = await Promise.all([
+  const [services, addons, drinks, settings, testimonials] = await Promise.all([
     getServices(),
     getAddons(),
+    getDrinks(),
     getStudioSettings(),
     getTestimonials(),
   ]);
+
+  const hotDrinks = drinks.filter((d) => d.temperature === "hot");
+  const coldDrinks = drinks.filter((d) => d.temperature === "cold");
 
   const features: { title?: string; hint?: string }[] = [
     { title: settings.feature1Title, hint: settings.feature1Hint },
@@ -183,17 +187,40 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* STUDIO GALLERY */}
-        <section className="px-4 mt-10">
-          <SectionHeading kicker="The Studio" title="Step inside" />
-          <div className="grid grid-cols-2 gap-3 mt-3">
-            <StudioCard variant="chair" />
-            <StudioCard variant="mirror" />
-            <div className="col-span-2">
-              <StudioCard variant="products" />
-            </div>
-          </div>
-        </section>
+        {/* REFRESHMENTS */}
+        {drinks.length > 0 && (
+          <section className="px-4 mt-10">
+            <SectionHeading kicker="On the house" title="Refreshments" />
+            <p className="text-xs text-gray-500 mt-1 mb-3">
+              Order hot or cold drinks while you're in the chair.
+            </p>
+
+            {hotDrinks.length > 0 && (
+              <div className="mb-4">
+                <p className="chip bg-orange-100 text-orange-700 mb-2 text-[10px] uppercase tracking-wider">
+                  Hot
+                </p>
+                <ul className="space-y-2">
+                  {hotDrinks.map((d) => (
+                    <DrinkRow key={d.id} drink={d} />
+                  ))}
+                </ul>
+              </div>
+            )}
+            {coldDrinks.length > 0 && (
+              <div>
+                <p className="chip bg-sky-100 text-sky-700 mb-2 text-[10px] uppercase tracking-wider">
+                  Cold
+                </p>
+                <ul className="space-y-2">
+                  {coldDrinks.map((d) => (
+                    <DrinkRow key={d.id} drink={d} />
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* TESTIMONIALS */}
         {testimonials.length > 0 && (
@@ -326,6 +353,24 @@ function ServiceCard({
       </div>
       <p className="font-bold text-brand-blue whitespace-nowrap">
         {service.priceKwd} KWD
+      </p>
+    </li>
+  );
+}
+
+function DrinkRow({ drink }: { drink: Drink }) {
+  return (
+    <li className="card !py-3 flex items-center gap-3">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold leading-tight">{drink.name}</p>
+        {drink.description && (
+          <p className="text-[11px] text-gray-500 leading-tight mt-0.5">
+            {drink.description}
+          </p>
+        )}
+      </div>
+      <p className="text-xs font-bold text-brand-blue whitespace-nowrap">
+        {drink.priceKwd === 0 ? "Free" : `${drink.priceKwd} KWD`}
       </p>
     </li>
   );

@@ -10,6 +10,10 @@ export async function generateMetadata(): Promise<Metadata> {
     description:
       settings.heroSubheading ??
       "Book your next cut, trim, or color in seconds.",
+    icons: {
+      icon: "/logo.jpeg",
+      apple: "/logo.jpeg",
+    },
   };
 }
 

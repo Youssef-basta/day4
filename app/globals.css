@@ -7,6 +7,13 @@
   --brand-yellow: #FACC15;
 }
 
+html {
+  /* Bumped from the browser default of 16px so the app reads at the
+     comfortable size of a ~150% browser zoom by default. Tailwind's
+     spacing/sizing utilities are rem-based and scale with this. */
+  font-size: 24px;
+}
+
 html, body {
   height: 100%;
 }
