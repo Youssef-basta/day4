@@ -1,8 +1,11 @@
 "use server";
 
+import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireOwner } from "@/lib/db/admin";
 import type {
+  AdminRole,
   BookingStatus,
   DrinkOrder,
   ServiceTier,
@@ -170,6 +173,7 @@ function validateServiceInput(input: ServiceInput) {
 }
 
 export async function createServiceAction(input: ServiceInput) {
+  await requireOwner();
   validateServiceInput(input);
   const supabase = createAdminClient();
   const { error } = await supabase.from("services").insert({
@@ -188,6 +192,7 @@ export async function createServiceAction(input: ServiceInput) {
 }
 
 export async function updateServiceAction(input: ServiceInput) {
+  await requireOwner();
   validateServiceInput(input);
   const supabase = createAdminClient();
   const { error } = await supabase
@@ -208,6 +213,7 @@ export async function updateServiceAction(input: ServiceInput) {
 }
 
 export async function deleteServiceAction(id: string) {
+  await requireOwner();
   const supabase = createAdminClient();
   // Try hard delete; if FK blocks because past bookings reference it,
   // fall back to soft delete (is_active = false).
@@ -243,6 +249,7 @@ function validateStaffInput(input: StaffInput) {
 }
 
 export async function createStaffAction(input: StaffInput) {
+  await requireOwner();
   validateStaffInput(input);
   const supabase = createAdminClient();
   const { error } = await supabase.from("staff").insert({
@@ -257,6 +264,7 @@ export async function createStaffAction(input: StaffInput) {
 }
 
 export async function updateStaffAction(input: StaffInput) {
+  await requireOwner();
   validateStaffInput(input);
   const supabase = createAdminClient();
   const { error } = await supabase
@@ -273,6 +281,7 @@ export async function updateStaffAction(input: StaffInput) {
 }
 
 export async function deleteStaffAction(id: string) {
+  await requireOwner();
   const supabase = createAdminClient();
   // Hard-delete first; FK on bookings.staff_id is ON DELETE SET NULL so this
   // is safe — past bookings just lose the assignment. Soft-delete fallback
@@ -308,6 +317,7 @@ export async function assignBookingStaffAction(
 export async function updateSettingsAction(
   input: Partial<StudioSettings>
 ) {
+  await requireOwner();
   const supabase = createAdminClient();
   if (!input.brandName || !input.brandName.trim()) {
     throw new Error("Brand name is required");
@@ -347,6 +357,104 @@ export async function updateSettingsAction(
 
   revalidatePath("/admin/settings");
   revalidatePath("/", "layout");
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Admin user management (owner-only)
+// ────────────────────────────────────────────────────────────────────
+
+type AdminUserInput = {
+  email: string;
+  password?: string;
+  role: AdminRole;
+  isActive?: boolean;
+};
+
+function validateAdminUser(input: AdminUserInput, requirePassword: boolean) {
+  const email = input.email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error("Valid email is required");
+  }
+  if (requirePassword) {
+    if (!input.password || input.password.length < 8) {
+      throw new Error("Password must be at least 8 characters");
+    }
+  } else if (input.password && input.password.length < 8) {
+    throw new Error("Password must be at least 8 characters");
+  }
+  if (input.role !== "owner" && input.role !== "manager") {
+    throw new Error("Role must be owner or manager");
+  }
+}
+
+export async function createAdminUserAction(input: AdminUserInput) {
+  await requireOwner();
+  validateAdminUser(input, true);
+  const supabase = createAdminClient();
+  const password_hash = await bcrypt.hash(input.password!, 10);
+  const { error } = await supabase.from("admin_users").insert({
+    email: input.email.trim().toLowerCase(),
+    password_hash,
+    role: input.role,
+    is_active: input.isActive ?? true,
+  });
+  if (error) throw error;
+  revalidatePath("/admin/users");
+}
+
+export async function updateAdminUserAction(
+  id: string,
+  input: AdminUserInput
+) {
+  const session = await requireOwner();
+  validateAdminUser(input, false);
+
+  const supabase = createAdminClient();
+
+  // Prevent the last active owner from demoting / deactivating themselves
+  // into a state where no owner is left.
+  if (
+    session.userId === id &&
+    (input.role !== "owner" || input.isActive === false)
+  ) {
+    throw new Error(
+      "You can't demote or deactivate your own owner account. Promote another owner first."
+    );
+  }
+
+  const update: {
+    email: string;
+    role: AdminRole;
+    is_active: boolean;
+    updated_at: string;
+    password_hash?: string;
+  } = {
+    email: input.email.trim().toLowerCase(),
+    role: input.role,
+    is_active: input.isActive ?? true,
+    updated_at: new Date().toISOString(),
+  };
+  if (input.password) {
+    update.password_hash = await bcrypt.hash(input.password, 10);
+  }
+
+  const { error } = await supabase
+    .from("admin_users")
+    .update(update)
+    .eq("id", id);
+  if (error) throw error;
+  revalidatePath("/admin/users");
+}
+
+export async function deleteAdminUserAction(id: string) {
+  const session = await requireOwner();
+  if (session.userId === id) {
+    throw new Error("You can't delete your own account.");
+  }
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("admin_users").delete().eq("id", id);
+  if (error) throw error;
+  revalidatePath("/admin/users");
 }
 
 export async function toggleSlotAction(slotId: string) {

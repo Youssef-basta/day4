@@ -3,14 +3,23 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateSettingsAction } from "@/app/admin/actions";
+import { setLocaleAction } from "@/app/actions/locale";
+import type { Locale } from "@/lib/i18n";
 import type { StudioSettings } from "@/lib/types";
 
-export function SettingsForm({ initial }: { initial: StudioSettings }) {
+export function SettingsForm({
+  initial,
+  currentLocale,
+}: {
+  initial: StudioSettings;
+  currentLocale: Locale;
+}) {
   const router = useRouter();
   const [form, setForm] = useState<StudioSettings>(initial);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [localeBusy, setLocaleBusy] = useState(false);
 
   function update<K extends keyof StudioSettings>(
     key: K,
@@ -207,6 +216,43 @@ export function SettingsForm({ initial }: { initial: StudioSettings }) {
             value={form.graceMin}
             onChange={(e) => update("graceMin", Number(e.target.value))}
           />
+        </Field>
+      </Group>
+
+      <Group title="Language (Phase 1)">
+        <Field
+          label="Customer site language"
+          hint="Phase 1 covers the home hero and key labels. Other strings stay English."
+        >
+          <div className="flex gap-2">
+            {(
+              [
+                { id: "en" as Locale, label: "English" },
+                { id: "ar" as Locale, label: "العربية" },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                disabled={localeBusy}
+                onClick={() => {
+                  setLocaleBusy(true);
+                  setSaved(false);
+                  setLocaleAction(opt.id).finally(() => {
+                    setLocaleBusy(false);
+                    router.refresh();
+                  });
+                }}
+                className={`flex-1 rounded-xl py-2 text-sm font-bold ${
+                  currentLocale === opt.id
+                    ? "bg-brand-blue text-white"
+                    : "bg-gray-100 text-gray-700"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </Field>
       </Group>
 

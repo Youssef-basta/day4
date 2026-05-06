@@ -198,6 +198,36 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_users: {
+        Row: {
+          id: string
+          email: string
+          password_hash: string
+          role: Database["public"]["Enums"]["admin_role"]
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          password_hash: string
+          role?: Database["public"]["Enums"]["admin_role"]
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          password_hash?: string
+          role?: Database["public"]["Enums"]["admin_role"]
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           phone: string
@@ -415,6 +445,7 @@ export type Database = {
       ensure_slots: { Args: { p_days?: number }; Returns: undefined }
     }
     Enums: {
+      admin_role: "owner" | "manager"
       booking_status: "pending" | "done" | "cancelled"
       drink_temperature: "hot" | "cold"
       payment_method: "visa" | "knet" | "cash"

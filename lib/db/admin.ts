@@ -1,5 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { cookies } from "next/headers";
+import { ADMIN_COOKIE, verifySession } from "@/lib/auth";
 import {
   mapBooking,
   mapService,
@@ -10,6 +12,7 @@ import {
 } from "./map";
 import { bookingTotals } from "@/lib/pricing";
 import type {
+  AdminUser,
   Booking,
   Service,
   Addon,
@@ -178,6 +181,77 @@ export async function getAddonsAdmin(): Promise<Addon[]> {
     .order("sort_order", { ascending: true });
   if (error) throw error;
   return (data ?? []).map(mapAddon);
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Admin users
+// ────────────────────────────────────────────────────────────────────
+
+export async function getAdminUsers(): Promise<AdminUser[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("admin_users")
+    .select("id,email,role,is_active,created_at")
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    email: r.email,
+    role: r.role,
+    isActive: r.is_active,
+    createdAt: r.created_at,
+  }));
+}
+
+export async function findAdminUserByEmail(email: string) {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("admin_users")
+    .select("id,email,password_hash,role,is_active")
+    .eq("email", email.toLowerCase().trim())
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function findAdminUserById(id: string) {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("admin_users")
+    .select("id,email,role,is_active")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function getOwnerForFallback() {
+  // Used when the legacy ADMIN_PASSWORD logs in: we attribute the session
+  // to the seeded owner so audit trails / role checks work consistently.
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("admin_users")
+    .select("id,email,role")
+    .eq("role", "owner")
+    .eq("is_active", true)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function getCurrentAdmin() {
+  const token = cookies().get(ADMIN_COOKIE)?.value;
+  return verifySession(token);
+}
+
+export async function requireOwner() {
+  const session = await getCurrentAdmin();
+  if (!session || session.role !== "owner") {
+    throw new Error("Owner role required for this action");
+  }
+  return session;
 }
 
 export async function getStaffAll(): Promise<Staff[]> {

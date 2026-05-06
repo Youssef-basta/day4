@@ -18,6 +18,16 @@ export type Customer = {
   updatedAt: string;
 };
 
+export type AdminRole = "owner" | "manager";
+
+export type AdminUser = {
+  id: string;
+  email: string;
+  role: AdminRole;
+  isActive: boolean;
+  createdAt: string;
+};
+
 export type Staff = {
   id: string;
   name: string;

@@ -20,6 +20,20 @@ export function LoginForm({ brandName }: { brandName: string }) {
 
           <form action={formAction} className="space-y-4">
             <div>
+              <label className="block text-sm font-semibold mb-1">Email</label>
+              <input
+                name="email"
+                type="email"
+                className="input"
+                autoComplete="email"
+                placeholder="owner@joebarber.local"
+                autoFocus
+              />
+              <p className="text-[11px] text-gray-500 mt-1">
+                Leave blank if logging in with the shared admin password.
+              </p>
+            </div>
+            <div>
               <label className="block text-sm font-semibold mb-1">Password</label>
               <input
                 name="password"
@@ -27,7 +41,6 @@ export function LoginForm({ brandName }: { brandName: string }) {
                 className="input"
                 autoComplete="current-password"
                 required
-                autoFocus
               />
             </div>
 

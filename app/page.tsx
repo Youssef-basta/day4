@@ -28,6 +28,7 @@ import {
   getStudioSettings,
   getTestimonials,
 } from "@/lib/db/catalog";
+import { useServerT } from "@/lib/i18n";
 import type { Drink, Service, Testimonial } from "@/lib/types";
 
 const SERVICE_ICONS: Record<string, typeof ScissorsIcon> = {
@@ -62,6 +63,7 @@ export default async function HomePage() {
 
   const hotDrinks = drinks.filter((d) => d.temperature === "hot");
   const coldDrinks = drinks.filter((d) => d.temperature === "cold");
+  const { t } = useServerT();
 
   const features: { title?: string; hint?: string }[] = [
     { title: settings.feature1Title, hint: settings.feature1Hint },
@@ -92,10 +94,10 @@ export default async function HomePage() {
               </p>
             )}
             <h1 className="mt-2 text-3xl font-extrabold leading-tight">
-              {settings.heroHeadline1 ?? "Sharp cuts."}
+              {settings.heroHeadline1 ?? t("hero.fallbackHeadline1")}
               <br />
               <span className="text-brand-yellow">
-                {settings.heroHeadline2 ?? "No waiting."}
+                {settings.heroHeadline2 ?? t("hero.fallbackHeadline2")}
               </span>
             </h1>
             {settings.heroSubheading && (
@@ -108,7 +110,7 @@ export default async function HomePage() {
               className="btn-accent mt-6 w-full shadow-lg shadow-black/10"
             >
               <ScissorsIcon className="h-5 w-5" />
-              Book Now
+              {t("hero.bookNow")}
             </Link>
           </div>
         </section>
@@ -139,7 +141,7 @@ export default async function HomePage() {
 
         {/* SERVICES */}
         <section className="px-4 mt-8">
-          <SectionHeading kicker="Menu" title="Our services" />
+          <SectionHeading kicker={t("section.menu")} title={t("section.services")} />
           <ul className="space-y-3 mt-3">
             {services.map((s) => {
               const Icon = SERVICE_ICONS[s.id] ?? ScissorsIcon;
@@ -152,9 +154,12 @@ export default async function HomePage() {
         {/* ADD-ONS */}
         {addons.length > 0 && (
           <section className="px-4 mt-10">
-            <SectionHeading kicker="Make it yours" title="Add-ons" />
+            <SectionHeading
+              kicker={t("section.makeItYours")}
+              title={t("section.addons")}
+            />
             <p className="text-xs text-gray-500 mt-1 mb-3">
-              Layer any of these onto your booking.
+              {t("section.addonsHint")}
             </p>
             <ul className="grid grid-cols-2 gap-3">
               {addons.map((a) => {
@@ -190,19 +195,22 @@ export default async function HomePage() {
         {/* REFRESHMENTS */}
         {drinks.length > 0 && (
           <section className="px-4 mt-10">
-            <SectionHeading kicker="On the house" title="Refreshments" />
+            <SectionHeading
+              kicker={t("section.onTheHouse")}
+              title={t("section.refreshments")}
+            />
             <p className="text-xs text-gray-500 mt-1 mb-3">
-              Order hot or cold drinks while you're in the chair.
+              {t("section.refreshmentsHint")}
             </p>
 
             {hotDrinks.length > 0 && (
               <div className="mb-4">
                 <p className="chip bg-orange-100 text-orange-700 mb-2 text-[10px] uppercase tracking-wider">
-                  Hot
+                  {t("drinks.hot")}
                 </p>
                 <ul className="space-y-2">
                   {hotDrinks.map((d) => (
-                    <DrinkRow key={d.id} drink={d} />
+                    <DrinkRow key={d.id} drink={d} freeLabel={t("drinks.free")} />
                   ))}
                 </ul>
               </div>
@@ -210,11 +218,11 @@ export default async function HomePage() {
             {coldDrinks.length > 0 && (
               <div>
                 <p className="chip bg-sky-100 text-sky-700 mb-2 text-[10px] uppercase tracking-wider">
-                  Cold
+                  {t("drinks.cold")}
                 </p>
                 <ul className="space-y-2">
                   {coldDrinks.map((d) => (
-                    <DrinkRow key={d.id} drink={d} />
+                    <DrinkRow key={d.id} drink={d} freeLabel={t("drinks.free")} />
                   ))}
                 </ul>
               </div>
@@ -235,7 +243,7 @@ export default async function HomePage() {
         <section className="px-4 mt-10">
           <div className="card space-y-3 text-sm">
             <h3 className="font-bold text-brand-blue uppercase tracking-wider text-xs">
-              Visit us
+              {t("footer.visitUs")}
             </h3>
             {settings.addressLine1 && (
               <InfoRow
@@ -261,7 +269,7 @@ export default async function HomePage() {
           </div>
           <Link href="/book" className="btn-primary w-full mt-5">
             <ScissorsIcon className="h-5 w-5" />
-            Book your seat
+            {t("hero.bookYourSeat")}
           </Link>
         </section>
       </main>
@@ -358,7 +366,13 @@ function ServiceCard({
   );
 }
 
-function DrinkRow({ drink }: { drink: Drink }) {
+function DrinkRow({
+  drink,
+  freeLabel,
+}: {
+  drink: Drink;
+  freeLabel: string;
+}) {
   return (
     <li className="card !py-3 flex items-center gap-3">
       <div className="flex-1 min-w-0">
@@ -370,7 +384,7 @@ function DrinkRow({ drink }: { drink: Drink }) {
         )}
       </div>
       <p className="text-xs font-bold text-brand-blue whitespace-nowrap">
-        {drink.priceKwd === 0 ? "Free" : `${drink.priceKwd} KWD`}
+        {drink.priceKwd === 0 ? freeLabel : `${drink.priceKwd} KWD`}
       </p>
     </li>
   );
