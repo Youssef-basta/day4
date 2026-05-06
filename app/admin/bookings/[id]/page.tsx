@@ -66,7 +66,10 @@ export default async function AdminBookingDetailPage({
           <h1 className="text-lg font-bold text-brand-blue">
             {booking.customerName}
           </h1>
-          <StatusChip status={booking.status} />
+          <StatusChip
+            status={booking.status}
+            reason={booking.cancellationReason}
+          />
         </div>
         <div className="mb-3">
           <PaymentBadge booking={booking} />
@@ -129,8 +132,16 @@ export default async function AdminBookingDetailPage({
         </p>
       )}
       {booking.status === "cancelled" && (
-        <p className="card mt-5 text-sm text-gray-600 text-center">
-          This booking was cancelled.
+        <p
+          className={`card mt-5 text-sm text-center ${
+            booking.cancellationReason === "no_show"
+              ? "text-orange-700"
+              : "text-gray-600"
+          }`}
+        >
+          {booking.cancellationReason === "no_show"
+            ? "Auto-cancelled — customer did not arrive within 30 minutes."
+            : "This booking was cancelled."}
         </p>
       )}
     </div>

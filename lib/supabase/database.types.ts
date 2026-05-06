@@ -69,6 +69,7 @@ export type Database = {
       bookings: {
         Row: {
           addon_ids: string[]
+          cancellation_reason: string | null
           card_last4: string | null
           created_at: string
           customer_name: string
@@ -84,6 +85,7 @@ export type Database = {
         }
         Insert: {
           addon_ids?: string[]
+          cancellation_reason?: string | null
           card_last4?: string | null
           created_at?: string
           customer_name: string
@@ -99,6 +101,7 @@ export type Database = {
         }
         Update: {
           addon_ids?: string[]
+          cancellation_reason?: string | null
           card_last4?: string | null
           created_at?: string
           customer_name?: string

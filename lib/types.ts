@@ -29,6 +29,8 @@ export type BookingStatus = "pending" | "done" | "cancelled";
 export type PaymentMethod = "visa" | "knet" | "cash";
 export type PaymentStatus = "paid" | "unpaid";
 
+export type CancellationReason = "admin" | "no_show";
+
 export type Booking = {
   id: string;
   ref: string;
@@ -42,5 +44,6 @@ export type Booking = {
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   cardLast4?: string;
+  cancellationReason?: CancellationReason;
   createdAt: string;
 };

@@ -119,6 +119,10 @@ export default async function ConfirmationPage({
               </li>
             )}
           </ol>
+          <p className="text-[11px] text-gray-500 mt-3 leading-snug">
+            Heads up: your slot is held for 30 minutes after the start time.
+            After that it's automatically released so other customers can book it.
+          </p>
         </section>
 
         <div className="mt-6 flex gap-3">

@@ -50,6 +50,8 @@ export function mapBooking(r: BookingRow): Booking {
     paymentMethod: r.payment_method,
     paymentStatus: r.payment_status,
     cardLast4: r.card_last4 ?? undefined,
+    cancellationReason:
+      (r.cancellation_reason as Booking["cancellationReason"]) ?? undefined,
     createdAt: r.created_at,
   };
 }

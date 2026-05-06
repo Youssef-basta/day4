@@ -22,7 +22,10 @@ export async function updateBookingStatusAction(
 
   const { error: updErr } = await supabase
     .from("bookings")
-    .update({ status })
+    .update({
+      status,
+      cancellation_reason: becomesCancelled ? "admin" : null,
+    })
     .eq("id", bookingId);
   if (updErr) throw updErr;
 
