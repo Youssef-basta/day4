@@ -49,26 +49,37 @@ Sessions last 8 hours, then you'll be redirected back to login.
 
 Three methods on the booking flow:
 
-1. **Visa / Mastercard** — fake card form (number, name, expiry, CVV). Marks booking *Paid*. Stores only the last 4 digits.
-2. **KNET** — fake KNET gateway (card + PIN). Marks booking *Paid*.
+1. **Visa / Mastercard** — fake inline card form (Phase 1 of MyFatoorah integration is wired; UI swap pending — see below).
+2. **KNET** — same.
 3. **Cash on site** — booking is created *Unpaid*. Admin clears it via **Mark cash as Paid** in the booking detail when the customer pays.
 
-Online flows have a short artificial delay to feel like a real gateway round-trip. **No real payments are processed.** Card details are not stored or transmitted anywhere.
+## MyFatoorah integration
+
+Phase 1 (current) — server-side API client at [lib/myfatoorah.ts](lib/myfatoorah.ts). UI still uses the fake card forms.
+
+To enable, in `.env.local` (and Vercel env vars):
+
+```
+MYFATOORAH_API_TOKEN=eyJ0eXAiOiJK...    # from https://portal.myfatoorah.com
+MYFATOORAH_BASE_URL=https://apitest.myfatoorah.com
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+```
+
+Restart the dev server after changing env vars.
+
+**Test cards (sandbox):**
+- Visa: `4111 1111 1111 1111` · expiry `01/27` · CVV `100`
+- KNET: see MyFatoorah docs
+
+**Phase 2 (next)** — replace fake card forms with redirect to MyFatoorah's hosted page, add `payment_status='pending'` state + a `payment_intent_id` column, add `/api/payment/callback` to verify and finalize the booking. Stuck-payment cleanup at 15min.
+
+For production, switch `MYFATOORAH_BASE_URL` to `https://api.myfatoorah.com` and use the live API token.
 
 ## Demo flow
 
 1. Land on `/`, tap **Book Now**.
-2. Pick **Haircut**, pick a slot, fill name + phone.
-3. Pick **Cash on site** (or try Visa with `4242 4242 4242 4242`).
-4. Confirmation shows your `KB-####` reference.
+2. Pick **Haircut**, pick a slot, fill name + phone (8-digit Kuwait number).
+3. Pick **Cash on site** (or Visa with `4242 4242 4242 4242` while still on the fake demo).
+4. Confirmation shows your `KB-####` booking ID.
 5. Visit `/admin`, sign in with `admin123`.
 6. Open your booking → **Mark cash as Paid**, then **Mark as Done**.
-
-## What's intentionally not here
-
-- No real payment gateway — fake forms only.
-- No persistent database — bookings live in `lib/store.tsx` + localStorage.
-- Auth is a single shared password, not per-user accounts.
-- No SMS / email notifications.
-
-These are next-day scope.
