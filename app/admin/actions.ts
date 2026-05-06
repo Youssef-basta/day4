@@ -47,6 +47,44 @@ export async function markPaidAction(bookingId: string) {
   revalidatePath("/admin", "layout");
 }
 
+export async function updateBookingExtrasAction(
+  bookingId: string,
+  input: { serviceId: string; addonIds: string[] }
+) {
+  const supabase = createAdminClient();
+
+  const { data: svc, error: svcErr } = await supabase
+    .from("services")
+    .select("id")
+    .eq("id", input.serviceId)
+    .maybeSingle();
+  if (svcErr) throw svcErr;
+  if (!svc) throw new Error("Service not found");
+
+  const cleanedAddons = Array.from(new Set(input.addonIds));
+  if (cleanedAddons.length > 0) {
+    const { data: validAddons, error: addonErr } = await supabase
+      .from("addons")
+      .select("id")
+      .in("id", cleanedAddons);
+    if (addonErr) throw addonErr;
+    if ((validAddons?.length ?? 0) !== cleanedAddons.length) {
+      throw new Error("One or more add-ons do not exist");
+    }
+  }
+
+  const { error } = await supabase
+    .from("bookings")
+    .update({
+      service_id: input.serviceId,
+      addon_ids: cleanedAddons,
+    })
+    .eq("id", bookingId);
+  if (error) throw error;
+
+  revalidatePath("/admin", "layout");
+}
+
 export async function toggleSlotAction(slotId: string) {
   const supabase = createAdminClient();
 

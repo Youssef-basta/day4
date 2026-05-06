@@ -124,7 +124,7 @@ export function BookingWizard({
   return (
     <>
       <BrandHeader />
-      <main className="mx-auto max-w-md px-4 py-6 pb-24">
+      <main className="mx-auto max-w-md px-4 py-6 pb-40">
         <Stepper step={step} />
 
         {step === 1 && (
@@ -244,17 +244,6 @@ export function BookingWizard({
                 </div>
               </div>
             )}
-
-            <div className="mt-6">
-              <button
-                type="button"
-                onClick={() => setStep(2)}
-                disabled={!serviceId}
-                className="btn-primary w-full"
-              >
-                Continue
-              </button>
-            </div>
           </section>
         )}
 
@@ -297,23 +286,6 @@ export function BookingWizard({
                 ))}
               </div>
             )}
-            <div className="mt-6 flex gap-3">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="btn-outline flex-1"
-              >
-                Back
-              </button>
-              <button
-                type="button"
-                onClick={() => setStep(3)}
-                disabled={!slotId}
-                className="btn-primary flex-1"
-              >
-                Continue
-              </button>
-            </div>
           </section>
         )}
 
@@ -323,6 +295,7 @@ export function BookingWizard({
               Your details
             </h1>
             <form
+              id="step3-form"
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!name.trim() || !phone.trim()) return;
@@ -366,19 +339,6 @@ export function BookingWizard({
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Any preferences for your barber?"
                 />
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setStep(2)}
-                  className="btn-outline flex-1"
-                >
-                  Back
-                </button>
-                <button type="submit" className="btn-primary flex-1">
-                  Continue
-                </button>
               </div>
             </form>
           </section>
@@ -570,13 +530,133 @@ export function BookingWizard({
                 {paymentError}
               </p>
             )}
+          </section>
+        )}
+      </main>
 
-            <div className="mt-6 flex gap-3">
+      <StickyActionBar>
+        {step === 1 && (
+          <>
+            <SummaryLine>
+              {service ? (
+                <span className="truncate">
+                  <span className="font-semibold text-gray-700">
+                    {service.name}
+                  </span>
+                  {addonIds.length > 0 && (
+                    <span className="text-gray-500">
+                      {" "}
+                      + {addonIds.length} add-on
+                      {addonIds.length > 1 ? "s" : ""}
+                    </span>
+                  )}
+                </span>
+              ) : (
+                <span>Pick a service to continue</span>
+              )}
+              {serviceId && (
+                <span className="font-extrabold text-brand-blue whitespace-nowrap">
+                  {totals.priceKwd} KWD
+                </span>
+              )}
+            </SummaryLine>
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              disabled={!serviceId}
+              className="btn-primary w-full"
+            >
+              Continue
+            </button>
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            <SummaryLine>
+              {slot ? (
+                <span className="truncate">
+                  <span className="font-semibold text-gray-700">
+                    {formatDateLong(slot.date)}
+                  </span>
+                  <span className="text-gray-500"> · {formatTime(slot.time)}</span>
+                </span>
+              ) : (
+                <span>Pick a time to continue</span>
+              )}
+              <span className="font-extrabold text-brand-blue whitespace-nowrap">
+                {totals.priceKwd} KWD
+              </span>
+            </SummaryLine>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="btn-outline flex-1"
+              >
+                Back
+              </button>
               <button
                 type="button"
                 onClick={() => setStep(3)}
+                disabled={!slotId}
+                className="btn-primary flex-1"
+              >
+                Continue
+              </button>
+            </div>
+          </>
+        )}
+
+        {step === 3 && (
+          <>
+            <SummaryLine>
+              <span className="text-gray-500">
+                {totals.durationMin} min · {service?.name ?? ""}
+              </span>
+              <span className="font-extrabold text-brand-blue whitespace-nowrap">
+                {totals.priceKwd} KWD
+              </span>
+            </SummaryLine>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setStep(2)}
                 className="btn-outline flex-1"
+              >
+                Back
+              </button>
+              <button
+                type="submit"
+                form="step3-form"
+                className="btn-primary flex-1"
+              >
+                Continue
+              </button>
+            </div>
+          </>
+        )}
+
+        {step === 4 && (
+          <>
+            <SummaryLine>
+              <span className="text-gray-500 truncate">
+                {paymentMethod === "cash"
+                  ? "Cash on site"
+                  : paymentMethod
+                  ? `${paymentMethod.toUpperCase()} payment`
+                  : "Choose a payment method"}
+              </span>
+              <span className="font-extrabold text-brand-blue whitespace-nowrap">
+                {totals.priceKwd} KWD
+              </span>
+            </SummaryLine>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setStep(3)}
                 disabled={isPending}
+                className="btn-outline flex-1"
               >
                 Back
               </button>
@@ -593,10 +673,29 @@ export function BookingWizard({
                   : `Pay ${totals.priceKwd} KWD`}
               </button>
             </div>
-          </section>
+          </>
         )}
-      </main>
+      </StickyActionBar>
     </>
+  );
+}
+
+function StickyActionBar({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="fixed inset-x-0 bottom-0 z-20 bg-white/95 backdrop-blur border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]"
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
+      <div className="mx-auto max-w-md px-4 py-3 space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function SummaryLine({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-xs">
+      {children}
+    </div>
   );
 }
 

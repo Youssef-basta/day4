@@ -11,6 +11,7 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapSlot } from "@/lib/db/map";
 import { BookingActions } from "./BookingActions";
+import { EditExtrasPanel } from "./EditExtrasPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -115,6 +116,12 @@ export default async function AdminBookingDetailPage({
       </div>
 
       <BookingActions booking={booking} />
+
+      <EditExtrasPanel
+        booking={booking}
+        services={services}
+        addons={addons}
+      />
 
       {booking.status === "done" && (
         <p className="card mt-5 text-sm text-green-700 font-semibold text-center">
