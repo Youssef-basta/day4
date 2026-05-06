@@ -1,11 +1,17 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { BackdropDecoration } from "@/components/BackdropDecoration";
+import { getStudioSettings } from "@/lib/db/catalog";
 
-export const metadata: Metadata = {
-  title: "Joe Barber Studio",
-  description: "Book your next cut, trim, or color in seconds.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getStudioSettings();
+  return {
+    title: settings.brandName,
+    description:
+      settings.heroSubheading ??
+      "Book your next cut, trim, or color in seconds.",
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",

@@ -22,7 +22,13 @@ import {
   BubblesIcon,
   BottleIcon,
 } from "@/components/icons";
-import { getServices, getAddons } from "@/lib/db/catalog";
+import {
+  getAddons,
+  getServices,
+  getStudioSettings,
+  getTestimonials,
+} from "@/lib/db/catalog";
+import type { Service, Testimonial } from "@/lib/types";
 
 const SERVICE_ICONS: Record<string, typeof ScissorsIcon> = {
   haircut: ScissorsIcon,
@@ -43,12 +49,25 @@ const ADDON_ICONS: Record<string, typeof ScissorsIcon> = {
   wash: BubblesIcon,
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
-  const [services, addons] = await Promise.all([getServices(), getAddons()]);
+  const [services, addons, settings, testimonials] = await Promise.all([
+    getServices(),
+    getAddons(),
+    getStudioSettings(),
+    getTestimonials(),
+  ]);
+
+  const features: { title?: string; hint?: string }[] = [
+    { title: settings.feature1Title, hint: settings.feature1Hint },
+    { title: settings.feature2Title, hint: settings.feature2Hint },
+    { title: settings.feature3Title, hint: settings.feature3Hint },
+  ].filter((f) => f.title && f.hint);
 
   return (
     <>
-      <BrandHeader />
+      <BrandHeader brandName={settings.brandName} />
 
       <main className="mx-auto max-w-md pb-24">
         {/* HERO */}
@@ -63,18 +82,27 @@ export default async function HomePage() {
           </div>
 
           <div className="relative">
-            <p className="text-[11px] tracking-[0.25em] uppercase text-brand-yellow font-semibold">
-              Kuwait City · Est. 2019
-            </p>
+            {settings.heroKicker && (
+              <p className="text-[11px] tracking-[0.25em] uppercase text-brand-yellow font-semibold">
+                {settings.heroKicker}
+              </p>
+            )}
             <h1 className="mt-2 text-3xl font-extrabold leading-tight">
-              Sharp cuts.
+              {settings.heroHeadline1 ?? "Sharp cuts."}
               <br />
-              <span className="text-brand-yellow">No waiting.</span>
+              <span className="text-brand-yellow">
+                {settings.heroHeadline2 ?? "No waiting."}
+              </span>
             </h1>
-            <p className="mt-3 text-sm text-blue-100 max-w-[260px]">
-              Book a barber in under a minute. Walk in, sit down, walk out fresh.
-            </p>
-            <Link href="/book" className="btn-accent mt-6 w-full shadow-lg shadow-black/10">
+            {settings.heroSubheading && (
+              <p className="mt-3 text-sm text-blue-100 max-w-[260px]">
+                {settings.heroSubheading}
+              </p>
+            )}
+            <Link
+              href="/book"
+              className="btn-accent mt-6 w-full shadow-lg shadow-black/10"
+            >
               <ScissorsIcon className="h-5 w-5" />
               Book Now
             </Link>
@@ -82,21 +110,28 @@ export default async function HomePage() {
         </section>
 
         {/* WHY US */}
-        <section className="px-4 mt-6">
-          <ul className="grid grid-cols-3 gap-2">
-            <Feature icon={<ClockIcon className="h-5 w-5" />} title="60-sec" hint="booking" />
-            <Feature
-              icon={<StarIcon className="h-5 w-5 text-brand-yellow" />}
-              title="4.9★"
-              hint="rated"
-            />
-            <Feature
-              icon={<MapPinIcon className="h-5 w-5" />}
-              title="Salmiya"
-              hint="walk-ins ok"
-            />
-          </ul>
-        </section>
+        {features.length > 0 && (
+          <section className="px-4 mt-6">
+            <ul className="grid grid-cols-3 gap-2">
+              {features.map((f, i) => (
+                <Feature
+                  key={i}
+                  icon={
+                    i === 0 ? (
+                      <ClockIcon className="h-5 w-5" />
+                    ) : i === 1 ? (
+                      <StarIcon className="h-5 w-5 text-brand-yellow" />
+                    ) : (
+                      <MapPinIcon className="h-5 w-5" />
+                    )
+                  }
+                  title={f.title!}
+                  hint={f.hint!}
+                />
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* SERVICES */}
         <section className="px-4 mt-8">
@@ -111,40 +146,42 @@ export default async function HomePage() {
         </section>
 
         {/* ADD-ONS */}
-        <section className="px-4 mt-10">
-          <SectionHeading kicker="Make it yours" title="Add-ons" />
-          <p className="text-xs text-gray-500 mt-1 mb-3">
-            Layer any of these onto your booking.
-          </p>
-          <ul className="grid grid-cols-2 gap-3">
-            {addons.map((a) => {
-              const Icon = ADDON_ICONS[a.id] ?? SparkleIcon;
-              return (
-                <li
-                  key={a.id}
-                  className="card !p-3 flex flex-col items-start gap-2"
-                >
-                  <span className="h-9 w-9 rounded-lg bg-brand-blue/5 text-brand-blue flex items-center justify-center">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold leading-tight">
-                      {a.name}
-                    </p>
-                    {a.description && (
-                      <p className="text-[11px] text-gray-500 leading-tight mt-0.5">
-                        {a.description}
+        {addons.length > 0 && (
+          <section className="px-4 mt-10">
+            <SectionHeading kicker="Make it yours" title="Add-ons" />
+            <p className="text-xs text-gray-500 mt-1 mb-3">
+              Layer any of these onto your booking.
+            </p>
+            <ul className="grid grid-cols-2 gap-3">
+              {addons.map((a) => {
+                const Icon = ADDON_ICONS[a.id] ?? SparkleIcon;
+                return (
+                  <li
+                    key={a.id}
+                    className="card !p-3 flex flex-col items-start gap-2"
+                  >
+                    <span className="h-9 w-9 rounded-lg bg-brand-blue/5 text-brand-blue flex items-center justify-center">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold leading-tight">
+                        {a.name}
                       </p>
-                    )}
-                  </div>
-                  <p className="text-xs font-bold text-brand-blue mt-auto">
-                    +{a.priceKwd} KWD · {a.durationMin}m
-                  </p>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+                      {a.description && (
+                        <p className="text-[11px] text-gray-500 leading-tight mt-0.5">
+                          {a.description}
+                        </p>
+                      )}
+                    </div>
+                    <p className="text-xs font-bold text-brand-blue mt-auto">
+                      +{a.priceKwd} KWD · {a.durationMin}m
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
 
         {/* STUDIO GALLERY */}
         <section className="px-4 mt-10">
@@ -158,28 +195,14 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* TESTIMONIAL */}
-        <section className="px-4 mt-10">
-          <div className="card relative overflow-hidden">
-            <span className="absolute -top-3 -left-2 text-7xl text-brand-yellow/40 font-serif leading-none">
-              “
-            </span>
-            <div className="flex gap-0.5 text-brand-yellow mb-2">
-              <StarIcon className="h-4 w-4" />
-              <StarIcon className="h-4 w-4" />
-              <StarIcon className="h-4 w-4" />
-              <StarIcon className="h-4 w-4" />
-              <StarIcon className="h-4 w-4" />
-            </div>
-            <p className="text-sm text-gray-700 italic">
-              Cleanest fade in Kuwait. In and out in 30 minutes — and the booking
-              app is instant.
-            </p>
-            <p className="text-xs text-gray-500 mt-3 font-semibold">
-              — Faisal A., regular since 2022
-            </p>
-          </div>
-        </section>
+        {/* TESTIMONIALS */}
+        {testimonials.length > 0 && (
+          <section className="px-4 mt-10 space-y-3">
+            {testimonials.map((t) => (
+              <TestimonialCard key={t.id} testimonial={t} />
+            ))}
+          </section>
+        )}
 
         {/* FOOTER INFO */}
         <section className="px-4 mt-10">
@@ -187,21 +210,27 @@ export default async function HomePage() {
             <h3 className="font-bold text-brand-blue uppercase tracking-wider text-xs">
               Visit us
             </h3>
-            <InfoRow
-              icon={<MapPinIcon className="h-5 w-5" />}
-              primary="Salmiya, Block 10"
-              secondary="Salem Al Mubarak St."
-            />
-            <InfoRow
-              icon={<ClockIcon className="h-5 w-5" />}
-              primary="Sat – Thu · 10:00 AM – 9:30 PM"
-              secondary="Friday · 2:00 PM – 9:30 PM"
-            />
-            <InfoRow
-              icon={<PhoneIcon className="h-5 w-5" />}
-              primary="+965 5000 0000"
-              secondary="WhatsApp & calls"
-            />
+            {settings.addressLine1 && (
+              <InfoRow
+                icon={<MapPinIcon className="h-5 w-5" />}
+                primary={settings.addressLine1}
+                secondary={settings.addressLine2 ?? ""}
+              />
+            )}
+            {settings.hoursLine1 && (
+              <InfoRow
+                icon={<ClockIcon className="h-5 w-5" />}
+                primary={settings.hoursLine1}
+                secondary={settings.hoursLine2 ?? ""}
+              />
+            )}
+            {settings.phone && (
+              <InfoRow
+                icon={<PhoneIcon className="h-5 w-5" />}
+                primary={settings.phone}
+                secondary={settings.phoneHint ?? ""}
+              />
+            )}
           </div>
           <Link href="/book" className="btn-primary w-full mt-5">
             <ScissorsIcon className="h-5 w-5" />
@@ -218,7 +247,7 @@ function ServiceCard({
   Icon,
   tier,
 }: {
-  service: { id: string; name: string; description?: string; durationMin: number; priceKwd: number };
+  service: Service;
   Icon: typeof ScissorsIcon;
   tier: "standard" | "premium" | "signature";
 }) {
@@ -302,6 +331,25 @@ function ServiceCard({
   );
 }
 
+function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
+  return (
+    <div className="card relative overflow-hidden">
+      <span className="absolute -top-3 -left-2 text-7xl text-brand-yellow/40 font-serif leading-none">
+        "
+      </span>
+      <div className="flex gap-0.5 text-brand-yellow mb-2">
+        {Array.from({ length: testimonial.rating }, (_, i) => (
+          <StarIcon key={i} className="h-4 w-4" />
+        ))}
+      </div>
+      <p className="text-sm text-gray-700 italic">{testimonial.quote}</p>
+      <p className="text-xs text-gray-500 mt-3 font-semibold">
+        — {testimonial.author}
+      </p>
+    </div>
+  );
+}
+
 function SectionHeading({
   kicker,
   title,
@@ -339,7 +387,9 @@ function Feature({
       <p className="mt-1.5 text-sm font-bold text-brand-blue leading-tight">
         {title}
       </p>
-      <p className="text-[10px] text-gray-500 uppercase tracking-wider">{hint}</p>
+      <p className="text-[10px] text-gray-500 uppercase tracking-wider">
+        {hint}
+      </p>
     </li>
   );
 }
@@ -360,7 +410,7 @@ function InfoRow({
       </span>
       <div className="leading-tight">
         <p className="font-semibold">{primary}</p>
-        <p className="text-xs text-gray-500">{secondary}</p>
+        {secondary && <p className="text-xs text-gray-500">{secondary}</p>}
       </div>
     </div>
   );

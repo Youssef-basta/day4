@@ -1,7 +1,24 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { mapAddon, mapService, mapSlot } from "./map";
-import type { Addon, Service, Slot } from "@/lib/types";
+import {
+  mapAddon,
+  mapService,
+  mapSlot,
+  mapStudioSettings,
+  mapTestimonial,
+} from "./map";
+import type {
+  Addon,
+  Service,
+  Slot,
+  StudioSettings,
+  Testimonial,
+} from "@/lib/types";
+
+const FALLBACK_SETTINGS: StudioSettings = {
+  brandName: "Joe Barber Studio",
+  graceMin: 30,
+};
 
 export async function getServices(): Promise<Service[]> {
   const supabase = createClient();
@@ -21,6 +38,34 @@ export async function getAddons(): Promise<Addon[]> {
     .order("sort_order", { ascending: true });
   if (error) throw error;
   return (data ?? []).map(mapAddon);
+}
+
+export async function getStudioSettings(): Promise<StudioSettings> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("studio_settings")
+    .select("*")
+    .eq("id", 1)
+    .maybeSingle();
+  if (error) {
+    console.error("getStudioSettings:", error);
+    return FALLBACK_SETTINGS;
+  }
+  return data ? mapStudioSettings(data) : FALLBACK_SETTINGS;
+}
+
+export async function getTestimonials(): Promise<Testimonial[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("testimonials")
+    .select("*")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+  if (error) {
+    console.error("getTestimonials:", error);
+    return [];
+  }
+  return (data ?? []).map(mapTestimonial);
 }
 
 export async function getOpenSlots(): Promise<Slot[]> {

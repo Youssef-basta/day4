@@ -183,6 +183,105 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_settings: {
+        Row: {
+          id: number
+          brand_name: string
+          hero_kicker: string | null
+          hero_headline_1: string | null
+          hero_headline_2: string | null
+          hero_subheading: string | null
+          feature_1_title: string | null
+          feature_1_hint: string | null
+          feature_2_title: string | null
+          feature_2_hint: string | null
+          feature_3_title: string | null
+          feature_3_hint: string | null
+          address_line_1: string | null
+          address_line_2: string | null
+          hours_line_1: string | null
+          hours_line_2: string | null
+          phone: string | null
+          phone_hint: string | null
+          phone_placeholder: string | null
+          grace_min: number
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          brand_name: string
+          hero_kicker?: string | null
+          hero_headline_1?: string | null
+          hero_headline_2?: string | null
+          hero_subheading?: string | null
+          feature_1_title?: string | null
+          feature_1_hint?: string | null
+          feature_2_title?: string | null
+          feature_2_hint?: string | null
+          feature_3_title?: string | null
+          feature_3_hint?: string | null
+          address_line_1?: string | null
+          address_line_2?: string | null
+          hours_line_1?: string | null
+          hours_line_2?: string | null
+          phone?: string | null
+          phone_hint?: string | null
+          phone_placeholder?: string | null
+          grace_min?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          brand_name?: string
+          hero_kicker?: string | null
+          hero_headline_1?: string | null
+          hero_headline_2?: string | null
+          hero_subheading?: string | null
+          feature_1_title?: string | null
+          feature_1_hint?: string | null
+          feature_2_title?: string | null
+          feature_2_hint?: string | null
+          feature_3_title?: string | null
+          feature_3_hint?: string | null
+          address_line_1?: string | null
+          address_line_2?: string | null
+          hours_line_1?: string | null
+          hours_line_2?: string | null
+          phone?: string | null
+          phone_hint?: string | null
+          phone_placeholder?: string | null
+          grace_min?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      testimonials: {
+        Row: {
+          id: string
+          quote: string
+          author: string
+          rating: number
+          sort_order: number
+          is_active: boolean
+        }
+        Insert: {
+          id?: string
+          quote: string
+          author: string
+          rating?: number
+          sort_order?: number
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          quote?: string
+          author?: string
+          rating?: number
+          sort_order?: number
+          is_active?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

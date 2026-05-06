@@ -5,6 +5,7 @@ import { bookingTotals } from "@/lib/pricing";
 import { methodLabel } from "@/components/PaymentBadge";
 import { getBookingById } from "@/lib/db/admin";
 import { getServicesAdmin, getAddonsAdmin } from "@/lib/db/admin";
+import { getStudioSettings } from "@/lib/db/catalog";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapSlot } from "@/lib/db/map";
 
@@ -28,10 +29,12 @@ export default async function ConfirmationPage({
 }) {
   const booking = await getBookingById(params.id);
 
+  const settings = await getStudioSettings();
+
   if (!booking) {
     return (
       <>
-        <BrandHeader />
+        <BrandHeader brandName={settings.brandName} />
         <main className="mx-auto max-w-md px-4 py-10">
           <div className="card text-center">
             <p className="font-semibold text-gray-700">Booking not found</p>
@@ -57,7 +60,7 @@ export default async function ConfirmationPage({
 
   return (
     <>
-      <BrandHeader />
+      <BrandHeader brandName={settings.brandName} />
       <main className="mx-auto max-w-md px-4 py-6 pb-24">
         <div className="card text-center">
           <div className="mx-auto h-14 w-14 rounded-full bg-brand-yellow flex items-center justify-center text-brand-blue text-2xl font-black">
@@ -120,8 +123,9 @@ export default async function ConfirmationPage({
             )}
           </ol>
           <p className="text-[11px] text-gray-500 mt-3 leading-snug">
-            Heads up: your slot is held for 30 minutes after the start time.
-            After that it's automatically released so other customers can book it.
+            Heads up: your slot is held for {settings.graceMin} minutes after
+            the start time. After that it&apos;s automatically released so
+            other customers can book it.
           </p>
         </section>
 

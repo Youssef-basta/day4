@@ -13,10 +13,14 @@ export function BookingWizard({
   services,
   addons,
   slots,
+  brandName,
+  phonePlaceholder,
 }: {
   services: Service[];
   addons: Addon[];
   slots: Slot[];
+  brandName: string;
+  phonePlaceholder: string;
 }) {
   const [step, setStep] = useState<Step>(1);
   const [serviceId, setServiceId] = useState<string | null>(null);
@@ -123,7 +127,7 @@ export function BookingWizard({
 
   return (
     <>
-      <BrandHeader />
+      <BrandHeader brandName={brandName} />
       <main className="mx-auto max-w-md px-4 py-6 pb-40">
         <Stepper step={step} />
 
@@ -325,7 +329,7 @@ export function BookingWizard({
                   inputMode="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+965 5000 0000"
+                  placeholder={phonePlaceholder}
                   required
                 />
               </div>

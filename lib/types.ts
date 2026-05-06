@@ -31,6 +31,35 @@ export type PaymentStatus = "paid" | "unpaid";
 
 export type CancellationReason = "admin" | "no_show";
 
+export type StudioSettings = {
+  brandName: string;
+  heroKicker?: string;
+  heroHeadline1?: string;
+  heroHeadline2?: string;
+  heroSubheading?: string;
+  feature1Title?: string;
+  feature1Hint?: string;
+  feature2Title?: string;
+  feature2Hint?: string;
+  feature3Title?: string;
+  feature3Hint?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  hoursLine1?: string;
+  hoursLine2?: string;
+  phone?: string;
+  phoneHint?: string;
+  phonePlaceholder?: string;
+  graceMin: number;
+};
+
+export type Testimonial = {
+  id: string;
+  quote: string;
+  author: string;
+  rating: number;
+};
+
 export type Booking = {
   id: string;
   ref: string;
