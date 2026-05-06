@@ -5,6 +5,7 @@ import type {
   Drink,
   Service,
   Slot,
+  Staff,
   StudioSettings,
   Testimonial,
 } from "@/lib/types";
@@ -16,6 +17,7 @@ type BookingRow         = Database["public"]["Tables"]["bookings"]["Row"];
 type StudioSettingsRow  = Database["public"]["Tables"]["studio_settings"]["Row"];
 type TestimonialRow     = Database["public"]["Tables"]["testimonials"]["Row"];
 type DrinkRow           = Database["public"]["Tables"]["drinks"]["Row"];
+type StaffRow           = Database["public"]["Tables"]["staff"]["Row"];
 
 export function mapService(r: ServiceRow): Service {
   return {
@@ -66,7 +68,19 @@ export function mapBooking(r: BookingRow): Booking {
     cancellationReason:
       (r.cancellation_reason as Booking["cancellationReason"]) ?? undefined,
     drinkOrders: Array.isArray(r.drink_orders) ? r.drink_orders : [],
+    staffId:
+      (r as BookingRow & { staff_id?: string | null }).staff_id ?? undefined,
     createdAt: r.created_at,
+  };
+}
+
+export function mapStaff(r: StaffRow): Staff {
+  return {
+    id: r.id,
+    name: r.name,
+    phone: r.phone ?? undefined,
+    isActive: r.is_active,
+    sortOrder: r.sort_order,
   };
 }
 

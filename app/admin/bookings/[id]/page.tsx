@@ -8,6 +8,7 @@ import {
   getBookingById,
   getDrinksAdmin,
   getServicesAdmin,
+  getStaffActive,
 } from "@/lib/db/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapSlot } from "@/lib/db/map";
@@ -45,13 +46,15 @@ export default async function AdminBookingDetailPage({
     );
   }
 
-  const [services, addons, drinks, slot] = await Promise.all([
+  const [services, addons, drinks, slot, staff] = await Promise.all([
     getServicesAdmin(),
     getAddonsAdmin(),
     getDrinksAdmin(),
     getSlotById(booking.slotId),
+    getStaffActive(),
   ]);
   const service = services.find((s) => s.id === booking.serviceId);
+  const assignedStaff = staff.find((s) => s.id === booking.staffId);
   const totals = bookingTotals(booking, services, addons, drinks);
 
   return (
@@ -107,6 +110,10 @@ export default async function AdminBookingDetailPage({
             />
           )}
           <Field
+            label="Barber"
+            value={assignedStaff ? assignedStaff.name : "Unassigned"}
+          />
+          <Field
             label="When"
             value={
               slot
@@ -144,6 +151,7 @@ export default async function AdminBookingDetailPage({
         services={services}
         addons={addons}
         drinks={drinks}
+        staff={staff}
       />
 
       {booking.status === "done" && (

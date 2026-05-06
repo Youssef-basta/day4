@@ -224,6 +224,84 @@ export async function deleteServiceAction(id: string) {
 }
 
 // ────────────────────────────────────────────────────────────────────
+// Staff admin
+// ────────────────────────────────────────────────────────────────────
+
+type StaffInput = {
+  id: string;
+  name: string;
+  phone?: string;
+  isActive?: boolean;
+  sortOrder?: number;
+};
+
+function validateStaffInput(input: StaffInput) {
+  if (!/^[a-z0-9_-]+$/.test(input.id)) {
+    throw new Error("Staff ID must be lowercase letters, numbers, _ or -");
+  }
+  if (!input.name.trim()) throw new Error("Name is required");
+}
+
+export async function createStaffAction(input: StaffInput) {
+  validateStaffInput(input);
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("staff").insert({
+    id: input.id,
+    name: input.name.trim(),
+    phone: input.phone?.trim() || null,
+    is_active: input.isActive ?? true,
+    sort_order: input.sortOrder ?? 100,
+  });
+  if (error) throw error;
+  revalidatePath("/admin", "layout");
+}
+
+export async function updateStaffAction(input: StaffInput) {
+  validateStaffInput(input);
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("staff")
+    .update({
+      name: input.name.trim(),
+      phone: input.phone?.trim() || null,
+      is_active: input.isActive ?? true,
+      sort_order: input.sortOrder ?? 100,
+    })
+    .eq("id", input.id);
+  if (error) throw error;
+  revalidatePath("/admin", "layout");
+}
+
+export async function deleteStaffAction(id: string) {
+  const supabase = createAdminClient();
+  // Hard-delete first; FK on bookings.staff_id is ON DELETE SET NULL so this
+  // is safe — past bookings just lose the assignment. Soft-delete fallback
+  // for any other constraint failure (shouldn't happen).
+  const del = await supabase.from("staff").delete().eq("id", id);
+  if (del.error) {
+    const soft = await supabase
+      .from("staff")
+      .update({ is_active: false })
+      .eq("id", id);
+    if (soft.error) throw soft.error;
+  }
+  revalidatePath("/admin", "layout");
+}
+
+export async function assignBookingStaffAction(
+  bookingId: string,
+  staffId: string | null
+) {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("bookings")
+    .update({ staff_id: staffId })
+    .eq("id", bookingId);
+  if (error) throw error;
+  revalidatePath("/admin", "layout");
+}
+
+// ────────────────────────────────────────────────────────────────────
 // Studio settings admin
 // ────────────────────────────────────────────────────────────────────
 

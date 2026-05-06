@@ -82,6 +82,7 @@ export type Database = {
           ref: string
           service_id: string
           slot_id: string
+          staff_id: string | null
           status: Database["public"]["Enums"]["booking_status"]
         }
         Insert: {
@@ -99,6 +100,7 @@ export type Database = {
           ref: string
           service_id: string
           slot_id: string
+          staff_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
         }
         Update: {
@@ -116,6 +118,7 @@ export type Database = {
           ref?: string
           service_id?: string
           slot_id?: string
+          staff_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
         }
         Relationships: [
@@ -165,6 +168,33 @@ export type Database = {
           price_kwd?: number
           sort_order?: number
           tier?: Database["public"]["Enums"]["service_tier"] | null
+        }
+        Relationships: []
+      }
+      staff: {
+        Row: {
+          id: string
+          name: string
+          phone: string | null
+          is_active: boolean
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id: string
+          name: string
+          phone?: string | null
+          is_active?: boolean
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          phone?: string | null
+          is_active?: boolean
+          sort_order?: number
+          created_at?: string
         }
         Relationships: []
       }

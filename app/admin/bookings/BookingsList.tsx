@@ -3,11 +3,18 @@
 import { useMemo, useState } from "react";
 import { BookingRow } from "@/components/BookingRow";
 import { EmptyState } from "@/components/EmptyState";
-import type { Booking, BookingStatus, Service, Slot } from "@/lib/types";
+import type {
+  Booking,
+  BookingStatus,
+  Service,
+  Slot,
+  Staff,
+} from "@/lib/types";
 import { todayKey } from "@/lib/seed";
 
 type StatusFilter = "all" | BookingStatus;
 type RangeFilter = "today" | "week" | "all";
+type StaffFilter = "all" | "unassigned" | string;
 
 function endOfWeek(now: Date) {
   const d = new Date(now);
@@ -19,18 +26,25 @@ export function BookingsList({
   bookings,
   services,
   slots,
+  staff,
 }: {
   bookings: Booking[];
   services: Service[];
   slots: Slot[];
+  staff: Staff[];
 }) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>("all");
+  const [staffFilter, setStaffFilter] = useState<StaffFilter>("all");
 
   const slotById = useMemo(() => new Map(slots.map((s) => [s.id, s])), [slots]);
   const serviceById = useMemo(
     () => new Map(services.map((s) => [s.id, s])),
     [services]
+  );
+  const staffById = useMemo(
+    () => new Map(staff.map((s) => [s.id, s])),
+    [staff]
   );
 
   const today = todayKey();
@@ -51,10 +65,27 @@ export function BookingsList({
           }
         }
 
+        if (staffFilter === "unassigned" && b.staffId) return false;
+        if (
+          staffFilter !== "all" &&
+          staffFilter !== "unassigned" &&
+          b.staffId !== staffFilter
+        ) {
+          return false;
+        }
+
         return true;
       })
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  }, [bookings, statusFilter, rangeFilter, slotById, today, weekEnd]);
+  }, [
+    bookings,
+    statusFilter,
+    rangeFilter,
+    staffFilter,
+    slotById,
+    today,
+    weekEnd,
+  ]);
 
   return (
     <div>
@@ -109,6 +140,36 @@ export function BookingsList({
             ))}
           </div>
         </div>
+        {staff.length > 0 && (
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+              Barber
+            </label>
+            <div className="flex gap-2 overflow-x-auto no-scrollbar">
+              <FilterChip
+                active={staffFilter === "all"}
+                onClick={() => setStaffFilter("all")}
+              >
+                All
+              </FilterChip>
+              <FilterChip
+                active={staffFilter === "unassigned"}
+                onClick={() => setStaffFilter("unassigned")}
+              >
+                Unassigned
+              </FilterChip>
+              {staff.map((s) => (
+                <FilterChip
+                  key={s.id}
+                  active={staffFilter === s.id}
+                  onClick={() => setStaffFilter(s.id)}
+                >
+                  {s.name}
+                </FilterChip>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {filtered.length === 0 ? (
@@ -124,11 +185,34 @@ export function BookingsList({
                 booking={b}
                 service={serviceById.get(b.serviceId)}
                 slot={slotById.get(b.slotId)}
+                staff={b.staffId ? staffById.get(b.staffId) : undefined}
               />
             </li>
           ))}
         </ul>
       )}
     </div>
+  );
+}
+
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`chip whitespace-nowrap ${
+        active ? "bg-brand-blue text-white" : "bg-gray-100 text-gray-600"
+      }`}
+    >
+      {children}
+    </button>
   );
 }

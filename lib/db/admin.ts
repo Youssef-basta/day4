@@ -1,6 +1,13 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { mapBooking, mapService, mapAddon, mapDrink, mapSlot } from "./map";
+import {
+  mapBooking,
+  mapService,
+  mapAddon,
+  mapDrink,
+  mapSlot,
+  mapStaff,
+} from "./map";
 import { bookingTotals } from "@/lib/pricing";
 import type {
   Booking,
@@ -8,6 +15,7 @@ import type {
   Addon,
   Drink,
   Slot,
+  Staff,
   CustomerSummary,
 } from "@/lib/types";
 
@@ -170,6 +178,28 @@ export async function getAddonsAdmin(): Promise<Addon[]> {
     .order("sort_order", { ascending: true });
   if (error) throw error;
   return (data ?? []).map(mapAddon);
+}
+
+export async function getStaffAll(): Promise<Staff[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("staff")
+    .select("*")
+    .order("is_active", { ascending: false })
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapStaff);
+}
+
+export async function getStaffActive(): Promise<Staff[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("staff")
+    .select("*")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapStaff);
 }
 
 export async function getDrinksAdmin(): Promise<Drink[]> {

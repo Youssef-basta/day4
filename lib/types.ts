@@ -18,6 +18,14 @@ export type Customer = {
   updatedAt: string;
 };
 
+export type Staff = {
+  id: string;
+  name: string;
+  phone?: string;
+  isActive: boolean;
+  sortOrder: number;
+};
+
 export type CustomerSummary = {
   phone: string;
   displayName: string;
@@ -111,5 +119,6 @@ export type Booking = {
   cardLast4?: string;
   cancellationReason?: CancellationReason;
   drinkOrders: DrinkOrder[];
+  staffId?: string;
   createdAt: string;
 };

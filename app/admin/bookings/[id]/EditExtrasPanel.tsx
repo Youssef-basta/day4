@@ -2,7 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { updateBookingExtrasAction } from "@/app/admin/actions";
+import {
+  assignBookingStaffAction,
+  updateBookingExtrasAction,
+} from "@/app/admin/actions";
 import { bookingTotals } from "@/lib/pricing";
 import type {
   Addon,
@@ -10,6 +13,7 @@ import type {
   Drink,
   DrinkOrder,
   Service,
+  Staff,
 } from "@/lib/types";
 
 export function EditExtrasPanel({
@@ -17,11 +21,13 @@ export function EditExtrasPanel({
   services,
   addons,
   drinks,
+  staff,
 }: {
   booking: Booking;
   services: Service[];
   addons: Addon[];
   drinks: Drink[];
+  staff: Staff[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -104,6 +110,14 @@ export function EditExtrasPanel({
       <p className="text-xs text-gray-500 mt-0.5 mb-4">
         Change the service, toggle add-ons, or add drinks after the customer arrives.
       </p>
+
+      {staff.length > 0 && (
+        <StaffAssignmentRow
+          bookingId={booking.id}
+          currentStaffId={booking.staffId}
+          staff={staff}
+        />
+      )}
 
       <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
         Service
@@ -257,6 +271,59 @@ export function EditExtrasPanel({
         {pending ? "Saving…" : "Save changes"}
       </button>
     </section>
+  );
+}
+
+function StaffAssignmentRow({
+  bookingId,
+  currentStaffId,
+  staff,
+}: {
+  bookingId: string;
+  currentStaffId: string | undefined;
+  staff: Staff[];
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [value, setValue] = useState<string>(currentStaffId ?? "");
+  const [err, setErr] = useState<string | null>(null);
+
+  function save(next: string) {
+    setErr(null);
+    setValue(next);
+    startTransition(async () => {
+      try {
+        await assignBookingStaffAction(bookingId, next || null);
+        router.refresh();
+      } catch (e: unknown) {
+        setErr(e instanceof Error ? e.message : "Could not assign barber");
+      }
+    });
+  }
+
+  return (
+    <div className="mb-4 rounded-xl border-2 border-brand-yellow/40 bg-amber-50/40 p-3">
+      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+        Assigned barber
+      </label>
+      <select
+        className="input"
+        value={value}
+        onChange={(e) => save(e.target.value)}
+        disabled={pending}
+      >
+        <option value="">— Unassigned —</option>
+        {staff.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.name}
+          </option>
+        ))}
+      </select>
+      {pending && (
+        <p className="text-[11px] text-gray-500 mt-1">Saving…</p>
+      )}
+      {err && <p className="text-xs text-red-600 mt-1">{err}</p>}
+    </div>
   );
 }
 

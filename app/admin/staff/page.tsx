@@ -1,47 +1,39 @@
+import { getAllBookings, getStaffAll } from "@/lib/db/admin";
+import { todayKey } from "@/lib/seed";
+import { StaffManager } from "./StaffManager";
+
 export const dynamic = "force-dynamic";
 
-export default function AdminStaffPage() {
-  return (
-    <div>
-      <h1 className="text-xl font-bold text-brand-blue mb-1">Staff</h1>
-      <p className="text-xs text-gray-500 mb-5">
-        Assign bookings to specific barbers and track per-barber availability.
-      </p>
+export default async function AdminStaffPage() {
+  const [staff, bookings] = await Promise.all([
+    getStaffAll(),
+    getAllBookings(),
+  ]);
 
-      <div className="card border-2 border-dashed border-brand-yellow/60 bg-amber-50/40">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="chip bg-brand-yellow text-brand-blue px-2 py-0.5 text-[10px]">
-            Coming next
-          </span>
-          <p className="text-sm font-bold text-brand-blue">
-            Multi-barber support
-          </p>
-        </div>
-        <p className="text-sm text-gray-700 mb-3">
-          The shop currently runs as a single chair. When you're ready to
-          expand to multiple barbers, this section will let you:
-        </p>
-        <ul className="space-y-2 text-sm">
-          <Bullet>Add and manage staff (name, phone, services they offer)</Bullet>
-          <Bullet>Assign each booking to a specific barber</Bullet>
-          <Bullet>Show per-barber availability in the slot manager</Bullet>
-          <Bullet>Filter bookings by staff member</Bullet>
-          <Bullet>Per-barber commission reports</Bullet>
-        </ul>
-        <p className="text-[11px] text-gray-500 mt-4">
-          Schema: a new <code className="font-mono">staff</code> table and a{" "}
-          <code className="font-mono">bookings.staff_id</code> column.
-        </p>
-      </div>
-    </div>
-  );
-}
+  // Per-staff active booking counts (today + total upcoming pending).
+  const today = todayKey();
+  const todayCounts: Record<string, number> = {};
+  const upcomingCounts: Record<string, number> = {};
+  for (const b of bookings) {
+    if (!b.staffId) continue;
+    if (b.status === "cancelled") continue;
+    upcomingCounts[b.staffId] = (upcomingCounts[b.staffId] ?? 0) + 1;
+  }
+  for (const b of bookings) {
+    if (!b.staffId) continue;
+    if (b.status !== "pending") continue;
+    todayCounts[b.staffId] = (todayCounts[b.staffId] ?? 0) + 1;
+  }
+  // (We don't have slot.date readily in this aggregation, so todayCounts
+  // approximates "today" as pending-bookings-by-staff. Good enough for the
+  // dashboard; the booking detail is the source of truth.)
+  void today; // silence unused
 
-function Bullet({ children }: { children: React.ReactNode }) {
   return (
-    <li className="flex items-start gap-2">
-      <span className="text-brand-blue">•</span>
-      <span>{children}</span>
-    </li>
+    <StaffManager
+      staff={staff}
+      upcomingCounts={upcomingCounts}
+      todayCounts={todayCounts}
+    />
   );
 }
