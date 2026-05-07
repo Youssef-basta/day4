@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { BrandHeader } from "@/components/BrandHeader";
+import { CustomerHeaderActions } from "@/components/CustomerHeaderActions";
+import { getCustomerSession } from "@/lib/db/customer";
 import { BarberPole } from "@/components/BarberPole";
 import {
   ScissorsIcon,
@@ -53,13 +55,15 @@ const ADDON_ICONS: Record<string, typeof ScissorsIcon> = {
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [services, addons, drinks, settings, testimonials] = await Promise.all([
-    getServices(),
-    getAddons(),
-    getDrinks(),
-    getStudioSettings(),
-    getTestimonials(),
-  ]);
+  const [services, addons, drinks, settings, testimonials, session] =
+    await Promise.all([
+      getServices(),
+      getAddons(),
+      getDrinks(),
+      getStudioSettings(),
+      getTestimonials(),
+      getCustomerSession(),
+    ]);
 
   const hotDrinks = drinks.filter((d) => d.temperature === "hot");
   const coldDrinks = drinks.filter((d) => d.temperature === "cold");
@@ -73,7 +77,10 @@ export default async function HomePage() {
 
   return (
     <>
-      <BrandHeader brandName={settings.brandName} />
+      <BrandHeader
+        brandName={settings.brandName}
+        rightSlot={<CustomerHeaderActions session={session} />}
+      />
 
       <main className="mx-auto max-w-md pb-24">
         {/* HERO */}

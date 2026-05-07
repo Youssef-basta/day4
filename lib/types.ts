@@ -36,9 +36,26 @@ export type Staff = {
   sortOrder: number;
 };
 
+export type TimeBand = "morning" | "afternoon" | "evening" | "any";
+
+export type CustomerProfile = {
+  phone: string;
+  name?: string;
+  email?: string;
+  hasAccount: boolean;
+  isVip: boolean;
+  notes?: string;
+  favoriteServiceIds: string[];
+  preferredTimeBand: TimeBand;
+  smsOptIn: boolean;
+  emailOptIn: boolean;
+};
+
 export type CustomerSummary = {
   phone: string;
   displayName: string;
+  email?: string;
+  hasAccount: boolean;
   bookingCount: number;
   doneCount: number;
   cancelledCount: number;

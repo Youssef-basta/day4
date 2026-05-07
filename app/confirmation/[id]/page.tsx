@@ -10,6 +10,8 @@ import {
   getDrinksAdmin,
 } from "@/lib/db/admin";
 import { getStudioSettings } from "@/lib/db/catalog";
+import { getCustomerSession } from "@/lib/db/customer";
+import { CustomerHeaderActions } from "@/components/CustomerHeaderActions";
 import { useServerT } from "@/lib/i18n-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapSlot } from "@/lib/db/map";
@@ -34,13 +36,19 @@ export default async function ConfirmationPage({
 }) {
   const booking = await getBookingById(params.id);
 
-  const settings = await getStudioSettings();
+  const [settings, session] = await Promise.all([
+    getStudioSettings(),
+    getCustomerSession(),
+  ]);
   const { t } = useServerT();
 
   if (!booking) {
     return (
       <>
-        <BrandHeader brandName={settings.brandName} />
+        <BrandHeader
+        brandName={settings.brandName}
+        rightSlot={<CustomerHeaderActions session={session} />}
+      />
         <main className="mx-auto max-w-md px-4 py-10">
           <div className="card text-center">
             <p className="font-semibold text-gray-700">{t("conf.notFound")}</p>
@@ -67,7 +75,10 @@ export default async function ConfirmationPage({
 
   return (
     <>
-      <BrandHeader brandName={settings.brandName} />
+      <BrandHeader
+        brandName={settings.brandName}
+        rightSlot={<CustomerHeaderActions session={session} />}
+      />
       <main className="mx-auto max-w-md px-4 py-6 pb-24">
         <div className="card text-center">
           <div className="mx-auto h-14 w-14 rounded-full bg-brand-yellow flex items-center justify-center text-brand-blue text-2xl font-black">

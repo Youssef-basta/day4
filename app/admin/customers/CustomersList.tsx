@@ -76,11 +76,24 @@ export function CustomersList({
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-brand-blue mb-1">Customers</h1>
-      <p className="text-xs text-gray-500 mb-4">
-        Aggregated from booking phone numbers. {customers.length} unique
-        customer{customers.length === 1 ? "" : "s"}.
-      </p>
+      <div className="flex items-end justify-between mb-4">
+        <div>
+          <h1 className="text-xl font-bold text-brand-blue mb-1">
+            Customers
+          </h1>
+          <p className="text-xs text-gray-500">
+            {customers.length} unique customer
+            {customers.length === 1 ? "" : "s"}.
+          </p>
+        </div>
+        <a
+          href="/admin/customers/export"
+          download
+          className="rounded-lg border border-brand-blue text-brand-blue text-xs font-bold py-2 px-3"
+        >
+          Export CSV
+        </a>
+      </div>
 
       <div className="card mb-4 space-y-3">
         <input

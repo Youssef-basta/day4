@@ -72,7 +72,9 @@ export async function getCustomers(): Promise<CustomerSummary[]> {
     supabase.from("addons").select("*"),
     supabase.from("drinks").select("*"),
     supabase.from("slots").select("id,date,time"),
-    supabase.from("customers").select("phone,is_vip,notes"),
+    supabase
+      .from("customers")
+      .select("phone,is_vip,notes,name,email,password_hash"),
   ]);
   if (bErr) throw bErr;
   if (sErr) throw sErr;
@@ -87,8 +89,17 @@ export async function getCustomers(): Promise<CustomerSummary[]> {
   const slotById = new Map(
     (slots ?? []).map((s) => [s.id, `${s.date}T${s.time}`])
   );
-  const vipByPhone = new Map(
-    (customers ?? []).map((c) => [c.phone, { isVip: c.is_vip, notes: c.notes }])
+  const customerByPhone = new Map(
+    (customers ?? []).map((c) => [
+      c.phone,
+      {
+        isVip: c.is_vip,
+        notes: c.notes,
+        name: c.name,
+        email: c.email,
+        hasAccount: Boolean(c.password_hash),
+      },
+    ])
   );
 
   const byPhone = new Map<string, CustomerSummary>();
@@ -110,17 +121,19 @@ export async function getCustomers(): Promise<CustomerSummary[]> {
         existing.displayName = b.customerName || existing.displayName;
       }
     } else {
-      const vip = vipByPhone.get(phone);
+      const cust = customerByPhone.get(phone);
       byPhone.set(phone, {
         phone,
-        displayName: b.customerName || phone,
+        displayName: cust?.name || b.customerName || phone,
+        email: cust?.email ?? undefined,
+        hasAccount: cust?.hasAccount ?? false,
         bookingCount: 1,
         doneCount: b.status === "done" ? 1 : 0,
         cancelledCount: b.status === "cancelled" ? 1 : 0,
         totalSpentKwd: b.status === "done" ? totals.priceKwd : 0,
         lastVisit: slotKey || undefined,
-        isVip: vip?.isVip ?? false,
-        notes: vip?.notes ?? undefined,
+        isVip: cust?.isVip ?? false,
+        notes: cust?.notes ?? undefined,
       });
     }
   }

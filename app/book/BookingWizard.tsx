@@ -2,9 +2,11 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { BrandHeader } from "@/components/BrandHeader";
+import { CustomerHeaderActions } from "@/components/CustomerHeaderActions";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { bookingTotals } from "@/lib/pricing";
 import { t as tFn, type DictKey, type Locale } from "@/lib/i18n";
+import type { CustomerSession } from "@/lib/customer-auth";
 import type {
   Addon,
   Drink,
@@ -25,6 +27,11 @@ export function BookingWizard({
   brandName,
   phonePlaceholder,
   locale,
+  initialName = "",
+  initialPhone = "",
+  preselectServiceId = null,
+  favoriteServiceIds = [],
+  session,
 }: {
   services: Service[];
   addons: Addon[];
@@ -33,16 +40,24 @@ export function BookingWizard({
   brandName: string;
   phonePlaceholder: string;
   locale: Locale;
+  initialName?: string;
+  initialPhone?: string;
+  preselectServiceId?: string | null;
+  favoriteServiceIds?: string[];
+  session?: CustomerSession | null;
 }) {
   const t = (key: DictKey, vars?: Record<string, string | number>) =>
     tFn(locale, key, vars);
+  const favoriteSet = new Set(favoriteServiceIds);
   const [step, setStep] = useState<Step>(1);
-  const [serviceId, setServiceId] = useState<string | null>(null);
+  const [serviceId, setServiceId] = useState<string | null>(
+    preselectServiceId
+  );
   const [addonIds, setAddonIds] = useState<string[]>([]);
   const [drinkOrders, setDrinkOrders] = useState<DrinkOrder[]>([]);
   const [slotId, setSlotId] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [name, setName] = useState(initialName);
+  const [phone, setPhone] = useState(initialPhone);
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [notes, setNotes] = useState("");
 
@@ -180,7 +195,10 @@ export function BookingWizard({
 
   return (
     <>
-      <BrandHeader brandName={brandName} />
+      <BrandHeader
+        brandName={brandName}
+        rightSlot={<CustomerHeaderActions session={session ?? null} />}
+      />
       <main className="mx-auto max-w-md px-4 py-6 pb-40">
         <Stepper step={step} t={t} />
 
@@ -208,6 +226,14 @@ export function BookingWizard({
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
+                          {favoriteSet.has(s.id) && (
+                            <span
+                              className="text-brand-yellow text-sm leading-none"
+                              aria-label="Favorite"
+                            >
+                              ★
+                            </span>
+                          )}
                           <p className="font-semibold">{s.name}</p>
                           {premium && (
                             <span className="chip bg-brand-yellow text-brand-blue px-2 py-0.5 text-[10px]">

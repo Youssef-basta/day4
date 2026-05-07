@@ -233,6 +233,14 @@ export type Database = {
           phone: string
           is_vip: boolean
           notes: string | null
+          name: string | null
+          email: string | null
+          password_hash: string | null
+          favorite_service_ids: string[]
+          preferred_time_band: string | null
+          sms_opt_in: boolean
+          email_opt_in: boolean
+          avatar_url: string | null
           created_at: string
           updated_at: string
         }
@@ -240,6 +248,14 @@ export type Database = {
           phone: string
           is_vip?: boolean
           notes?: string | null
+          name?: string | null
+          email?: string | null
+          password_hash?: string | null
+          favorite_service_ids?: string[]
+          preferred_time_band?: string | null
+          sms_opt_in?: boolean
+          email_opt_in?: boolean
+          avatar_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -247,6 +263,14 @@ export type Database = {
           phone?: string
           is_vip?: boolean
           notes?: string | null
+          name?: string | null
+          email?: string | null
+          password_hash?: string | null
+          favorite_service_ids?: string[]
+          preferred_time_band?: string | null
+          sms_opt_in?: boolean
+          email_opt_in?: boolean
+          avatar_url?: string | null
           created_at?: string
           updated_at?: string
         }
