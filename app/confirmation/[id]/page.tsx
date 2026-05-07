@@ -10,6 +10,7 @@ import {
   getDrinksAdmin,
 } from "@/lib/db/admin";
 import { getStudioSettings } from "@/lib/db/catalog";
+import { useServerT } from "@/lib/i18n-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapSlot } from "@/lib/db/map";
 
@@ -34,6 +35,7 @@ export default async function ConfirmationPage({
   const booking = await getBookingById(params.id);
 
   const settings = await getStudioSettings();
+  const { t } = useServerT();
 
   if (!booking) {
     return (
@@ -41,12 +43,12 @@ export default async function ConfirmationPage({
         <BrandHeader brandName={settings.brandName} />
         <main className="mx-auto max-w-md px-4 py-10">
           <div className="card text-center">
-            <p className="font-semibold text-gray-700">Booking not found</p>
+            <p className="font-semibold text-gray-700">{t("conf.notFound")}</p>
             <p className="text-sm text-gray-500 mt-1">
-              It may have been cleared. Try booking again.
+              {t("conf.notFoundHint")}
             </p>
             <Link href="/" className="btn-primary mt-5 inline-flex">
-              Back to home
+              {t("conf.backHome")}
             </Link>
           </div>
         </main>
@@ -72,15 +74,17 @@ export default async function ConfirmationPage({
             ✓
           </div>
           <h1 className="text-xl font-bold text-brand-blue mt-3">
-            You&apos;re booked!
+            {t("conf.youreBooked")}
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            We&apos;ll see you soon, {booking.customerName.split(" ")[0]}.
+            {t("conf.seeSoon", {
+              name: booking.customerName.split(" ")[0] || booking.customerName,
+            })}
           </p>
 
           <div className="mt-5 rounded-2xl bg-brand-blue text-white px-4 py-4">
             <p className="text-[10px] uppercase tracking-[0.25em] text-brand-yellow font-semibold">
-              Your booking ID
+              {t("conf.bookingId")}
             </p>
             <p className="font-mono font-extrabold text-2xl mt-1 tracking-wider">
               {booking.ref}
@@ -88,23 +92,23 @@ export default async function ConfirmationPage({
           </div>
 
           <div className="mt-3 rounded-xl bg-gray-50 px-4 py-4 text-left text-sm">
-            <Row label="Service" value={service?.name ?? "—"} />
+            <Row label={t("conf.serviceLabel")} value={service?.name ?? "—"} />
             {totals.addons.length > 0 && (
               <Row
-                label="Add-ons"
+                label={t("conf.addonsLabel")}
                 value={totals.addons.map((a) => a.name).join(", ")}
               />
             )}
             {totals.drinks.length > 0 && (
               <Row
-                label="Drinks"
+                label={t("conf.drinksLabel")}
                 value={totals.drinks
                   .map((l) => `${l.qty}× ${l.drink.name}`)
                   .join(", ")}
               />
             )}
             <Row
-              label="Time"
+              label={t("conf.timeLabel")}
               value={
                 slot
                   ? `${formatDateLong(slot.date)} · ${formatTime(
@@ -113,49 +117,50 @@ export default async function ConfirmationPage({
                   : "—"
               }
             />
-            <Row label="Total" value={`${totals.priceKwd} KWD`} />
-            <Row label="Phone" value={booking.phone} />
+            <Row label={t("conf.totalLabel")} value={`${totals.priceKwd} KWD`} />
+            <Row label={t("conf.phoneLabel")} value={booking.phone} />
             <Row
-              label="Payment"
+              label={t("conf.paymentLabel")}
               value={
                 booking.paymentMethod === "cash"
-                  ? `Cash on site · ${totals.priceKwd} KWD due`
+                  ? t("conf.cashSummary", { n: totals.priceKwd })
                   : `${methodLabel(booking.paymentMethod)} · Paid${
                       booking.cardLast4 ? ` (•••• ${booking.cardLast4})` : ""
                     }`
               }
             />
-            {booking.notes && <Row label="Notes" value={booking.notes} />}
+            {booking.notes && <Row label={t("conf.notesLabel")} value={booking.notes} />}
           </div>
         </div>
 
         <section className="mt-6">
           <h2 className="text-sm font-bold text-brand-blue uppercase tracking-wider mb-2">
-            What&apos;s next
+            {t("conf.whatsNext")}
           </h2>
           <ol className="card space-y-3 text-sm list-decimal list-inside">
-            <li>Save your reference: <span className="font-semibold">{booking.ref}</span></li>
-            <li>Arrive 10 minutes early at the studio.</li>
-            <li>Show the reference at the counter.</li>
+            <li>
+              {t("conf.saveRef", { ref: "" })}
+              <span className="font-semibold">{booking.ref}</span>
+            </li>
+            <li>{t("conf.arriveEarly")}</li>
+            <li>{t("conf.showRef")}</li>
             {booking.paymentMethod === "cash" && (
               <li className="text-orange-700 font-semibold">
-                Bring {totals.priceKwd} KWD in cash to pay on arrival.
+                {t("conf.bringCash", { n: totals.priceKwd })}
               </li>
             )}
           </ol>
           <p className="text-[11px] text-gray-500 mt-3 leading-snug">
-            Heads up: your slot is held for {settings.graceMin} minutes after
-            the start time. After that it&apos;s automatically released so
-            other customers can book it.
+            {t("conf.holdNote", { min: settings.graceMin })}
           </p>
         </section>
 
         <div className="mt-6 flex gap-3">
           <Link href="/" className="btn-outline flex-1">
-            Home
+            {t("conf.home")}
           </Link>
           <Link href="/book" className="btn-primary flex-1">
-            Book another
+            {t("conf.bookAnother")}
           </Link>
         </div>
       </main>

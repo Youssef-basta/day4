@@ -1,5 +1,5 @@
 import { getStudioSettings } from "@/lib/db/catalog";
-import { getLocale } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
 import { SettingsForm } from "./SettingsForm";
 
 export const dynamic = "force-dynamic";

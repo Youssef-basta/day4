@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { BrandHeader } from "@/components/BrandHeader";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { bookingTotals } from "@/lib/pricing";
+import { t as tFn, type DictKey, type Locale } from "@/lib/i18n";
 import type {
   Addon,
   Drink,
@@ -23,6 +24,7 @@ export function BookingWizard({
   slots,
   brandName,
   phonePlaceholder,
+  locale,
 }: {
   services: Service[];
   addons: Addon[];
@@ -30,7 +32,10 @@ export function BookingWizard({
   slots: Slot[];
   brandName: string;
   phonePlaceholder: string;
+  locale: Locale;
 }) {
+  const t = (key: DictKey, vars?: Record<string, string | number>) =>
+    tFn(locale, key, vars);
   const [step, setStep] = useState<Step>(1);
   const [serviceId, setServiceId] = useState<string | null>(null);
   const [addonIds, setAddonIds] = useState<string[]>([]);
@@ -177,12 +182,12 @@ export function BookingWizard({
     <>
       <BrandHeader brandName={brandName} />
       <main className="mx-auto max-w-md px-4 py-6 pb-40">
-        <Stepper step={step} />
+        <Stepper step={step} t={t} />
 
         {step === 1 && (
           <section>
             <h1 className="text-xl font-bold text-brand-blue mb-3">
-              Pick a service
+              {t("book.pickService")}
             </h1>
             <ul className="space-y-3">
               {services.map((s) => {
@@ -231,7 +236,7 @@ export function BookingWizard({
             {serviceId && (
               <div className="mt-6">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                  Add-ons (optional)
+                  {t("book.addonsTitle")}
                 </h2>
                 <ul className="space-y-2">
                   {addons.map((a) => {
@@ -288,7 +293,7 @@ export function BookingWizard({
                 </ul>
                 <div className="mt-3 flex items-center justify-between text-sm">
                   <span className="text-gray-500">
-                    Total · {totals.durationMin} min
+                    {t("book.totalDuration", { min: totals.durationMin })}
                   </span>
                   <span className="font-bold text-brand-blue">
                     {totals.priceKwd} KWD
@@ -302,22 +307,22 @@ export function BookingWizard({
         {step === 2 && (
           <section>
             <h1 className="text-xl font-bold text-brand-blue mb-3">
-              Pick a time
+              {t("book.pickTime")}
             </h1>
             {!hasAnyOpen ? (
               <p className="card text-sm text-gray-600">
-                No open time slots right now. Please check back later.
+                {t("book.noOpenSlots")}
               </p>
             ) : (
               <>
                 <div className="flex items-center gap-3 text-[11px] text-gray-600 mb-3">
                   <span className="inline-flex items-center gap-1">
                     <span className="h-3 w-3 rounded-full bg-green-500" />
-                    Available
+                    {t("book.available")}
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <span className="h-3 w-3 rounded-full bg-red-500" />
-                    Booked
+                    {t("book.booked")}
                   </span>
                 </div>
                 <div className="space-y-5">
@@ -365,10 +370,10 @@ export function BookingWizard({
         {step === 3 && (
           <section>
             <h1 className="text-xl font-bold text-brand-blue mb-1">
-              Refreshments
+              {t("book.refreshmentsTitle")}
             </h1>
             <p className="text-xs text-gray-500 mb-4">
-              Optional — hot or cold drinks ready when you sit down.
+              {t("book.refreshmentsSub")}
             </p>
 
             {drinks.length === 0 ? (
@@ -403,7 +408,7 @@ export function BookingWizard({
         {step === 4 && (
           <section>
             <h1 className="text-xl font-bold text-brand-blue mb-3">
-              Your details
+              {t("book.yourDetails")}
             </h1>
             <form
               id="step4-form"
@@ -417,19 +422,19 @@ export function BookingWizard({
             >
               <div>
                 <label className="block text-sm font-semibold mb-1">
-                  Full name
+                  {t("book.fullName")}
                 </label>
                 <input
                   className="input"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Ahmed Al-Sabah"
+                  placeholder={t("book.fullNamePh")}
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1">
-                  Phone number
+                  {t("book.phoneNumber")}
                 </label>
                 <div className="flex items-stretch rounded-xl border border-gray-300 focus-within:ring-2 focus-within:ring-brand-blue overflow-hidden">
                   <span className="px-3 py-3 bg-gray-50 text-gray-600 text-sm font-semibold border-r border-gray-300 select-none">
@@ -447,30 +452,33 @@ export function BookingWizard({
                       setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))
                     }
                     onBlur={() => setPhoneTouched(true)}
-                    placeholder="Enter 8-digit number"
+                    placeholder={t("book.phonePh")}
                     aria-invalid={Boolean(phoneError)}
                     required
                   />
                 </div>
                 {phoneError ? (
                   <p className="text-xs text-red-600 font-semibold mt-1">
-                    {phoneError}
+                    {t("book.phoneError")}
                   </p>
                 ) : (
                   <p className="text-xs text-gray-500 mt-1">
-                    Example: 50001234
+                    {t("book.phoneExample")}
                   </p>
                 )}
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1">
-                  Notes <span className="text-gray-400 font-normal">(optional)</span>
+                  {t("book.notes")}{" "}
+                  <span className="text-gray-400 font-normal">
+                    {t("book.notesOptional")}
+                  </span>
                 </label>
                 <textarea
                   className="input min-h-[88px]"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Any preferences for your barber?"
+                  placeholder={t("book.notesPh")}
                 />
               </div>
             </form>
@@ -480,11 +488,13 @@ export function BookingWizard({
         {step === 5 && (
           <section>
             <h1 className="text-xl font-bold text-brand-blue mb-3">
-              Payment
+              {t("book.payment")}
             </h1>
 
             <div className="card mb-4 text-sm">
-              <p className="font-semibold text-brand-blue mb-2">Order summary</p>
+              <p className="font-semibold text-brand-blue mb-2">
+                {t("book.orderSummary")}
+              </p>
               <div className="flex justify-between">
                 <span>{service?.name ?? "—"}</span>
                 <span className="font-bold">{service?.priceKwd ?? 0} KWD</span>
@@ -510,7 +520,7 @@ export function BookingWizard({
                 </div>
               ))}
               <div className="border-t border-gray-200 mt-2 pt-2 flex justify-between text-sm">
-                <span className="font-semibold">Total</span>
+                <span className="font-semibold">{t("book.totalLabel")}</span>
                 <span className="font-extrabold text-brand-blue">
                   {totals.priceKwd} KWD
                 </span>
@@ -526,16 +536,16 @@ export function BookingWizard({
             <div className="space-y-2 mb-4">
               <PaymentOption
                 id="visa"
-                title="Visa / Mastercard"
-                hint="Pay now, secure online"
+                title={t("book.payVisa")}
+                hint={t("book.payVisaHint")}
                 selected={paymentMethod === "visa"}
                 onSelect={() => setPaymentMethod("visa")}
                 icon={<span className="font-black text-lg italic">VISA</span>}
               />
               <PaymentOption
                 id="knet"
-                title="KNET"
-                hint="Pay now with your Kuwait bank card"
+                title={t("book.payKnet")}
+                hint={t("book.payKnetHint")}
                 selected={paymentMethod === "knet"}
                 onSelect={() => setPaymentMethod("knet")}
                 icon={
@@ -546,8 +556,8 @@ export function BookingWizard({
               />
               <PaymentOption
                 id="cash"
-                title="Cash on site"
-                hint="Pay at the studio when you arrive"
+                title={t("book.payCash")}
+                hint={t("book.payCashHint")}
                 selected={paymentMethod === "cash"}
                 onSelect={() => setPaymentMethod("cash")}
                 icon={<span>💵</span>}
@@ -661,10 +671,11 @@ export function BookingWizard({
 
             {paymentMethod === "cash" && (
               <div className="card text-sm">
-                <p className="font-semibold text-brand-blue">Pay on arrival</p>
+                <p className="font-semibold text-brand-blue">
+                  {t("book.payOnArrival")}
+                </p>
                 <p className="text-gray-600 mt-1">
-                  Bring {totals.priceKwd} KWD in cash to the studio. Your slot
-                  is held until the start time.
+                  {t("book.cashHint", { n: totals.priceKwd })}
                 </p>
               </div>
             )}
@@ -696,7 +707,7 @@ export function BookingWizard({
                   )}
                 </span>
               ) : (
-                <span>Pick a service to continue</span>
+                <span>{t("book.pickServiceFirst")}</span>
               )}
               {serviceId && (
                 <span className="font-extrabold text-brand-blue whitespace-nowrap">
@@ -710,7 +721,7 @@ export function BookingWizard({
               disabled={!serviceId}
               className="btn-primary w-full"
             >
-              Continue
+              {t("book.continue")}
             </button>
           </>
         )}
@@ -726,7 +737,7 @@ export function BookingWizard({
                   <span className="text-gray-500"> · {formatTime(slot.time)}</span>
                 </span>
               ) : (
-                <span>Pick a time to continue</span>
+                <span>{t("book.pickTimeFirst")}</span>
               )}
               <span className="font-extrabold text-brand-blue whitespace-nowrap">
                 {totals.priceKwd} KWD
@@ -738,7 +749,7 @@ export function BookingWizard({
                 onClick={() => setStep(1)}
                 className="btn-outline flex-1"
               >
-                Back
+                {t("book.back")}
               </button>
               <button
                 type="button"
@@ -746,7 +757,7 @@ export function BookingWizard({
                 disabled={!slotId}
                 className="btn-primary flex-1"
               >
-                Continue
+                {t("book.continue")}
               </button>
             </div>
           </>
@@ -757,12 +768,8 @@ export function BookingWizard({
             <SummaryLine>
               <span className="text-gray-500 truncate">
                 {totals.drinks.length === 0
-                  ? "No drinks · skip if you'd rather not"
-                  : `${totals.drinks.reduce((s, l) => s + l.qty, 0)} drink${
-                      totals.drinks.reduce((s, l) => s + l.qty, 0) > 1
-                        ? "s"
-                        : ""
-                    }`}
+                  ? t("book.noDrinks")
+                  : `${totals.drinks.reduce((s, l) => s + l.qty, 0)} ${t("step.drinks")}`}
               </span>
               <span className="font-extrabold text-brand-blue whitespace-nowrap">
                 {totals.priceKwd} KWD
@@ -774,14 +781,14 @@ export function BookingWizard({
                 onClick={() => setStep(2)}
                 className="btn-outline flex-1"
               >
-                Back
+                {t("book.back")}
               </button>
               <button
                 type="button"
                 onClick={() => setStep(4)}
                 className="btn-primary flex-1"
               >
-                {totals.drinks.length === 0 ? "Skip" : "Continue"}
+                {totals.drinks.length === 0 ? t("book.skip") : t("book.continue")}
               </button>
             </div>
           </>
@@ -803,14 +810,14 @@ export function BookingWizard({
                 onClick={() => setStep(3)}
                 className="btn-outline flex-1"
               >
-                Back
+                {t("book.back")}
               </button>
               <button
                 type="submit"
                 form="step4-form"
                 className="btn-primary flex-1"
               >
-                Continue
+                {t("book.continue")}
               </button>
             </div>
           </>
@@ -821,10 +828,10 @@ export function BookingWizard({
             <SummaryLine>
               <span className="text-gray-500 truncate">
                 {paymentMethod === "cash"
-                  ? "Cash on site"
+                  ? t("book.cashOnSite")
                   : paymentMethod
                   ? `${paymentMethod.toUpperCase()} payment`
-                  : "Choose a payment method"}
+                  : t("book.choosePayment")}
               </span>
               <span className="font-extrabold text-brand-blue whitespace-nowrap">
                 {totals.priceKwd} KWD
@@ -837,7 +844,7 @@ export function BookingWizard({
                 disabled={isPending}
                 className="btn-outline flex-1"
               >
-                Back
+                {t("book.back")}
               </button>
               <button
                 type="button"
@@ -846,10 +853,10 @@ export function BookingWizard({
                 className="btn-primary flex-1"
               >
                 {isPending
-                  ? "Processing…"
+                  ? t("book.processing")
                   : paymentMethod === "cash"
-                  ? "Confirm booking"
-                  : `Pay ${totals.priceKwd} KWD`}
+                  ? t("book.confirmBooking")
+                  : t("book.payN", { n: totals.priceKwd })}
               </button>
             </div>
           </>
@@ -1011,8 +1018,20 @@ function formatExpiry(v: string) {
   return `${digits.slice(0, 2)}/${digits.slice(2)}`;
 }
 
-function Stepper({ step }: { step: Step }) {
-  const labels = ["Service", "Time", "Drinks", "Details", "Pay"];
+function Stepper({
+  step,
+  t,
+}: {
+  step: Step;
+  t: (key: DictKey, vars?: Record<string, string | number>) => string;
+}) {
+  const labels = [
+    t("step.service"),
+    t("step.time"),
+    t("step.drinks"),
+    t("step.details"),
+    t("step.pay"),
+  ];
   return (
     <div className="mb-6">
       <ol className="flex items-center gap-1.5">

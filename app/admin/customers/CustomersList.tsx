@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -130,7 +131,10 @@ export function CustomersList({
             return (
               <li key={c.phone} className="card">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
+                  <Link
+                    href={`/admin/customers/${encodeURIComponent(c.phone)}`}
+                    className="min-w-0 flex-1"
+                  >
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-bold truncate">{c.displayName}</p>
                       {c.isVip && (
@@ -144,13 +148,10 @@ export function CustomersList({
                         </span>
                       )}
                     </div>
-                    <a
-                      href={`tel:${c.phone}`}
-                      className="text-sm text-brand-blue underline-offset-2 hover:underline"
-                    >
+                    <span className="text-sm text-brand-blue underline-offset-2 hover:underline">
                       {c.phone}
-                    </a>
-                  </div>
+                    </span>
+                  </Link>
                   <button
                     type="button"
                     onClick={() => toggleVip(c)}

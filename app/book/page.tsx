@@ -5,6 +5,7 @@ import {
   getStudioSettings,
 } from "@/lib/db/catalog";
 import { getUpcomingSlots } from "@/lib/db/admin";
+import { getLocale } from "@/lib/i18n-server";
 import { BookingWizard } from "./BookingWizard";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,7 @@ export default async function BookPage() {
     getUpcomingSlots(14),
     getStudioSettings(),
   ]);
+  const locale = getLocale();
   return (
     <BookingWizard
       services={services}
@@ -25,6 +27,7 @@ export default async function BookPage() {
       slots={slots}
       brandName={settings.brandName}
       phonePlaceholder={settings.phonePlaceholder ?? "+965 5000 0000"}
+      locale={locale}
     />
   );
 }

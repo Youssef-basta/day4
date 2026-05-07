@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { BackdropDecoration } from "@/components/BackdropDecoration";
 import { getStudioSettings } from "@/lib/db/catalog";
-import { getLocale, isRtl } from "@/lib/i18n";
+import { isRtl } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getStudioSettings();

@@ -28,7 +28,7 @@ import {
   getStudioSettings,
   getTestimonials,
 } from "@/lib/db/catalog";
-import { useServerT } from "@/lib/i18n";
+import { useServerT } from "@/lib/i18n-server";
 import type { Drink, Service, Testimonial } from "@/lib/types";
 
 const SERVICE_ICONS: Record<string, typeof ScissorsIcon> = {
