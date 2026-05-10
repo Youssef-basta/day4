@@ -107,7 +107,7 @@ export default async function ConfirmationPage({
 
           {slot && service && (
             <ConfirmationActions
-              bookingRef={booking.ref}
+              ref={booking.ref}
               bookingId={booking.id}
               brandName={settings.brandName}
               serviceName={service.name}

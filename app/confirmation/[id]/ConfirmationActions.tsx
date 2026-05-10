@@ -4,7 +4,7 @@ import { useState } from "react";
 
 type Props = {
   /** Booking ref shown to the user (e.g. KB-1234) */
-  bookingRef: string;
+  ref: string;
   /** Stable internal id used as ICS UID */
   bookingId: string;
   brandName: string;
@@ -63,7 +63,7 @@ function buildIcs(input: Props): string {
     `DTSTART:${startStamp}`,
     `DTEND:${endStamp}`,
     `SUMMARY:${escape(input.serviceName)} — ${escape(input.brandName)}`,
-    `DESCRIPTION:Booking ID ${escape(input.bookingRef)}`,
+    `DESCRIPTION:Booking ID ${escape(input.ref)}`,
   ];
   if (input.location) lines.push(`LOCATION:${escape(input.location)}`);
   lines.push("END:VEVENT", "END:VCALENDAR");
@@ -83,7 +83,7 @@ export function ConfirmationActions(props: Props) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${props.bookingRef}.ics`;
+    a.download = `${props.ref}.ics`;
     document.body.appendChild(a);
     a.click();
     a.remove();
