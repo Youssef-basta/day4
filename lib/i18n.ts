@@ -170,9 +170,6 @@ const dict = {
     en: "Cash on site · {n} KWD due",
     ar: "نقدي في المحل · {n} د.ك مستحقة",
   },
-  "conf.print": { en: "Print", ar: "طباعة" },
-  "conf.saveCal": { en: "Add to calendar", ar: "أضف إلى التقويم" },
-  "conf.saved": { en: "Saved!", ar: "تم الحفظ!" },
   // Settings page
   "settings.language": { en: "Language", ar: "اللغة" },
   "settings.languageHint": {
