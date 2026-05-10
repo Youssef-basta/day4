@@ -116,6 +116,20 @@ body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 
+/* Print-friendly receipt: hide app chrome and decorations, keep the card. */
+@media print {
+  html { font-size: 16px; }
+  body { background: #ffffff !important; color: #000 !important; }
+  .no-print { display: none !important; }
+  /* Drop the floating background icons + animated drift on print */
+  .barber-pole, .scissors-pattern { background: none !important; animation: none !important; }
+  /* Remove rounded shadows for a clean printed look */
+  .card { box-shadow: none !important; border: 1px solid #ccc !important; }
+  /* Force everything to fit on a printable width */
+  main { padding: 0 !important; max-width: 100% !important; }
+  a[href]:after { content: "" !important; }
+}
+
 .studio-tile::after {
   content: "";
   @apply absolute inset-0 pointer-events-none;

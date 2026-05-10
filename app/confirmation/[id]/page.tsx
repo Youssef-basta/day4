@@ -15,6 +15,7 @@ import { CustomerHeaderActions } from "@/components/CustomerHeaderActions";
 import { useServerT } from "@/lib/i18n-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapSlot } from "@/lib/db/map";
+import { ConfirmationActions } from "./ConfirmationActions";
 
 export const dynamic = "force-dynamic";
 
@@ -75,10 +76,12 @@ export default async function ConfirmationPage({
 
   return (
     <>
-      <BrandHeader
-        brandName={settings.brandName}
-        rightSlot={<CustomerHeaderActions session={session} />}
-      />
+      <div className="no-print">
+        <BrandHeader
+          brandName={settings.brandName}
+          rightSlot={<CustomerHeaderActions session={session} />}
+        />
+      </div>
       <main className="mx-auto max-w-md px-4 py-6 pb-24">
         <div className="card text-center">
           <div className="mx-auto h-14 w-14 rounded-full bg-brand-yellow flex items-center justify-center text-brand-blue text-2xl font-black">
@@ -101,6 +104,28 @@ export default async function ConfirmationPage({
               {booking.ref}
             </p>
           </div>
+
+          {slot && service && (
+            <ConfirmationActions
+              ref={booking.ref}
+              bookingId={booking.id}
+              brandName={settings.brandName}
+              serviceName={service.name}
+              startDate={slot.date}
+              startTime={slot.time}
+              durationMin={totals.durationMin}
+              location={
+                [settings.addressLine1, settings.addressLine2]
+                  .filter(Boolean)
+                  .join(", ") || undefined
+              }
+              labels={{
+                print: t("conf.print"),
+                saveCal: t("conf.saveCal"),
+                saved: t("conf.saved"),
+              }}
+            />
+          )}
 
           <div className="mt-3 rounded-xl bg-gray-50 px-4 py-4 text-left text-sm">
             <Row label={t("conf.serviceLabel")} value={service?.name ?? "—"} />
@@ -166,7 +191,7 @@ export default async function ConfirmationPage({
           </p>
         </section>
 
-        <div className="mt-6 flex gap-3">
+        <div className="mt-6 flex gap-3 no-print">
           <Link href="/" className="btn-outline flex-1">
             {t("conf.home")}
           </Link>
