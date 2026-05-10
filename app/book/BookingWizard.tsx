@@ -62,12 +62,6 @@ export function BookingWizard({
   const [notes, setNotes] = useState("");
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardName, setCardName] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
-  const [knetCard, setKnetCard] = useState("");
-  const [knetPin, setKnetPin] = useState("");
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -130,67 +124,33 @@ export function BookingWizard({
 
   const hasAnyOpen = slots.some((s) => s.isOpen);
 
-  function paymentReady(): boolean {
-    if (!paymentMethod) return false;
-    if (paymentMethod === "cash") return true;
-    if (paymentMethod === "visa") {
-      return (
-        cardNumber.replace(/\s/g, "").length >= 13 &&
-        cardName.trim().length > 1 &&
-        /^\d{2}\/\d{2}$/.test(cardExpiry) &&
-        /^\d{3,4}$/.test(cardCvv)
-      );
-    }
-    if (paymentMethod === "knet") {
-      return (
-        knetCard.replace(/\s/g, "").length >= 12 &&
-        /^\d{4,6}$/.test(knetPin)
-      );
-    }
-    return false;
-  }
-
   function handlePayAndConfirm() {
     if (!serviceId || !slotId || !paymentMethod) return;
-    if (!paymentReady()) {
-      setPaymentError("Please complete the payment details.");
-      return;
-    }
     setPaymentError(null);
 
-    const submit = () => {
-      const last4 =
-        paymentMethod === "visa"
-          ? cardNumber.replace(/\s/g, "").slice(-4)
-          : paymentMethod === "knet"
-          ? knetCard.replace(/\s/g, "").slice(-4)
-          : undefined;
-
-      startTransition(async () => {
-        const res = await createBookingAction({
-          serviceId,
-          addonIds,
-          drinkOrders,
-          slotId,
-          customerName: name.trim(),
-          phone: `+965${phoneDigits}`,
-          notes: notes.trim() || undefined,
-          paymentMethod,
-          cardLast4: last4,
-        });
-        if (res && !res.ok) {
-          setPaymentError(res.error);
-        }
-        // Success path redirects server-side; nothing to do here.
+    startTransition(async () => {
+      const res = await createBookingAction({
+        serviceId,
+        addonIds,
+        drinkOrders,
+        slotId,
+        customerName: name.trim(),
+        phone: `+965${phoneDigits}`,
+        notes: notes.trim() || undefined,
+        paymentMethod,
+        totalKwd: totals.priceKwd,
       });
-    };
 
-    if (paymentMethod === "cash") {
-      submit();
-    } else {
-      // Fake gateway delay so the demo feels real.
-      setTimeout(submit, 900);
-    }
+      if (!res) return; // server-side redirect (cash path)
+      if (!res.ok) {
+        setPaymentError(res.error);
+        return;
+      }
+      if ("redirect" in res && res.redirect === "gateway") {
+        // Hand off to MyFatoorah's hosted page.
+        window.location.href = res.paymentUrl;
+      }
+    });
   }
 
   return (
@@ -590,108 +550,23 @@ export function BookingWizard({
               />
             </div>
 
-            {paymentMethod === "visa" && (
-              <div className="card space-y-3">
-                <p className="text-xs text-gray-500">
-                  Demo only — no card data is stored or transmitted.
+            {(paymentMethod === "visa" || paymentMethod === "knet") && (
+              <div className="card text-sm">
+                <p className="font-semibold text-brand-blue">
+                  Secure payment · MyFatoorah
                 </p>
-                <div>
-                  <label className="block text-sm font-semibold mb-1">
-                    Card number
-                  </label>
-                  <input
-                    className="input font-mono tracking-wider"
-                    inputMode="numeric"
-                    placeholder="4242 4242 4242 4242"
-                    value={cardNumber}
-                    onChange={(e) =>
-                      setCardNumber(formatCardNumber(e.target.value))
-                    }
-                    maxLength={19}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-1">
-                    Cardholder name
-                  </label>
-                  <input
-                    className="input"
-                    placeholder="AHMED AL-SABAH"
-                    value={cardName}
-                    onChange={(e) => setCardName(e.target.value.toUpperCase())}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-semibold mb-1">
-                      Expiry
-                    </label>
-                    <input
-                      className="input font-mono"
-                      inputMode="numeric"
-                      placeholder="MM/YY"
-                      value={cardExpiry}
-                      onChange={(e) =>
-                        setCardExpiry(formatExpiry(e.target.value))
-                      }
-                      maxLength={5}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-1">
-                      CVV
-                    </label>
-                    <input
-                      className="input font-mono"
-                      inputMode="numeric"
-                      placeholder="123"
-                      value={cardCvv}
-                      onChange={(e) =>
-                        setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))
-                      }
-                      maxLength={4}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {paymentMethod === "knet" && (
-              <div className="card space-y-3">
-                <p className="text-xs text-gray-500">
-                  Demo only — simulating the KNET gateway.
+                <p className="text-gray-600 mt-1">
+                  You'll be redirected to MyFatoorah's hosted page to enter
+                  your{" "}
+                  {paymentMethod === "knet" ? "KNET" : "card"} details, then
+                  brought right back here. Your card information never
+                  touches our server.
                 </p>
-                <div>
-                  <label className="block text-sm font-semibold mb-1">
-                    KNET card number
-                  </label>
-                  <input
-                    className="input font-mono tracking-wider"
-                    inputMode="numeric"
-                    placeholder="0000 0000 0000"
-                    value={knetCard}
-                    onChange={(e) =>
-                      setKnetCard(formatCardNumber(e.target.value))
-                    }
-                    maxLength={19}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-1">
-                    PIN
-                  </label>
-                  <input
-                    className="input font-mono"
-                    inputMode="numeric"
-                    type="password"
-                    placeholder="••••"
-                    value={knetPin}
-                    onChange={(e) =>
-                      setKnetPin(e.target.value.replace(/\D/g, "").slice(0, 6))
-                    }
-                    maxLength={6}
-                  />
-                </div>
+                <p className="text-[11px] text-gray-500 mt-2">
+                  Sandbox mode — use any test{" "}
+                  {paymentMethod === "knet" ? "KNET card" : "Visa 4111 …"} to
+                  complete the demo flow.
+                </p>
               </div>
             )}
 
@@ -876,7 +751,7 @@ export function BookingWizard({
                 type="button"
                 onClick={handlePayAndConfirm}
                 disabled={!paymentMethod || isPending}
-                className="btn-primary flex-1"
+                className="btn-pay flex-1"
               >
                 {isPending
                   ? t("book.processing")
@@ -1029,19 +904,6 @@ function PaymentOption({
       />
     </button>
   );
-}
-
-function formatCardNumber(v: string) {
-  return v
-    .replace(/\D/g, "")
-    .slice(0, 16)
-    .replace(/(\d{4})(?=\d)/g, "$1 ");
-}
-
-function formatExpiry(v: string) {
-  const digits = v.replace(/\D/g, "").slice(0, 4);
-  if (digits.length <= 2) return digits;
-  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
 }
 
 function Stepper({

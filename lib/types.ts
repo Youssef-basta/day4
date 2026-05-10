@@ -83,7 +83,7 @@ export type Slot = {
 export type BookingStatus = "pending" | "done" | "cancelled";
 
 export type PaymentMethod = "visa" | "knet" | "cash";
-export type PaymentStatus = "paid" | "unpaid";
+export type PaymentStatus = "paid" | "unpaid" | "pending";
 
 export type DrinkTemperature = "hot" | "cold";
 
@@ -100,7 +100,7 @@ export type DrinkOrder = {
   qty: number;
 };
 
-export type CancellationReason = "admin" | "no_show";
+export type CancellationReason = "admin" | "no_show" | "payment_failed";
 
 export type StudioSettings = {
   brandName: string;
@@ -147,5 +147,8 @@ export type Booking = {
   cancellationReason?: CancellationReason;
   drinkOrders: DrinkOrder[];
   staffId?: string;
+  paymentIntentId?: string;
+  paymentInvoiceId?: number;
+  paymentUrl?: string;
   createdAt: string;
 };

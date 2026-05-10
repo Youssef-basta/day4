@@ -107,11 +107,16 @@ export async function executePayment(input: ExecutePaymentInput) {
   const env = loadEnv();
   if (!env) throw new Error("MyFatoorah is not configured");
 
+  // MyFatoorah caps CustomerMobile at 11 chars; we store full international
+  // format (+96550001234 = 12 chars) so send the last 8 digits — the local
+  // Kuwait subscriber number — which the gateway expects.
+  const localMobile = input.customerMobile.replace(/\D/g, "").slice(-8);
+
   const data = await call<ExecutePaymentData>(env, "/v2/ExecutePayment", {
     PaymentMethodId: GATEWAY_METHOD_IDS[input.method],
     InvoiceValue: input.amountKwd,
     CustomerName: input.customerName,
-    CustomerMobile: input.customerMobile,
+    CustomerMobile: localMobile,
     Language: "EN",
     CurrencyIso: "KWD",
     DisplayCurrencyIso: "KWD",

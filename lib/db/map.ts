@@ -70,6 +70,15 @@ export function mapBooking(r: BookingRow): Booking {
     drinkOrders: Array.isArray(r.drink_orders) ? r.drink_orders : [],
     staffId:
       (r as BookingRow & { staff_id?: string | null }).staff_id ?? undefined,
+    paymentIntentId:
+      (r as BookingRow & { payment_intent_id?: string | null })
+        .payment_intent_id ?? undefined,
+    paymentInvoiceId:
+      (r as BookingRow & { payment_invoice_id?: number | null })
+        .payment_invoice_id ?? undefined,
+    paymentUrl:
+      (r as BookingRow & { payment_url?: string | null }).payment_url ??
+      undefined,
     createdAt: r.created_at,
   };
 }

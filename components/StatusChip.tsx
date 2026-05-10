@@ -15,6 +15,7 @@ const baseLabel: Record<BookingStatus, string> = {
 const reasonLabel: Record<CancellationReason, string> = {
   admin: "Cancelled",
   no_show: "No-show",
+  payment_failed: "Payment failed",
 };
 
 export function StatusChip({
@@ -26,10 +27,9 @@ export function StatusChip({
 }) {
   const label =
     status === "cancelled" && reason ? reasonLabel[reason] : baseLabel[status];
-  const noShow = status === "cancelled" && reason === "no_show";
-  const cls =
-    status === "cancelled" && noShow
-      ? "bg-orange-100 text-orange-800"
-      : styles[status];
+  const accent =
+    status === "cancelled" &&
+    (reason === "no_show" || reason === "payment_failed");
+  const cls = accent ? "bg-orange-100 text-orange-800" : styles[status];
   return <span className={`chip ${cls}`}>{label}</span>;
 }

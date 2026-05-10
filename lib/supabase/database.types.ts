@@ -76,8 +76,11 @@ export type Database = {
           drink_orders: { id: string; qty: number }[]
           id: string
           notes: string | null
+          payment_intent_id: string | null
+          payment_invoice_id: number | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           payment_status: Database["public"]["Enums"]["payment_status"]
+          payment_url: string | null
           phone: string
           ref: string
           service_id: string
@@ -94,8 +97,11 @@ export type Database = {
           drink_orders?: { id: string; qty: number }[]
           id?: string
           notes?: string | null
+          payment_intent_id?: string | null
+          payment_invoice_id?: number | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           payment_status: Database["public"]["Enums"]["payment_status"]
+          payment_url?: string | null
           phone: string
           ref: string
           service_id: string
@@ -112,8 +118,11 @@ export type Database = {
           drink_orders?: { id: string; qty: number }[]
           id?: string
           notes?: string | null
+          payment_intent_id?: string | null
+          payment_invoice_id?: number | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          payment_url?: string | null
           phone?: string
           ref?: string
           service_id?: string
@@ -473,7 +482,7 @@ export type Database = {
       booking_status: "pending" | "done" | "cancelled"
       drink_temperature: "hot" | "cold"
       payment_method: "visa" | "knet" | "cash"
-      payment_status: "paid" | "unpaid"
+      payment_status: "paid" | "unpaid" | "pending"
       service_tier: "standard" | "premium" | "signature"
     }
     CompositeTypes: {
