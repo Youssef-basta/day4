@@ -1,13 +1,16 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireOwner } from "@/lib/db/admin";
+import { mapBooking } from "@/lib/db/map";
+import { requireAdmin, requireOwner } from "@/lib/db/admin";
 import type {
   AdminRole,
   BookingStatus,
   DrinkOrder,
+  PaymentMethod,
   ServiceTier,
   StudioSettings,
 } from "@/lib/types";
@@ -357,6 +360,81 @@ export async function updateSettingsAction(
 
   revalidatePath("/admin/settings");
   revalidatePath("/", "layout");
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Walk-in booking — admin creates a booking on behalf of a customer
+// (e.g. somebody walks in without using the customer site).
+// ────────────────────────────────────────────────────────────────────
+
+export type AdminCreateBookingInput = {
+  customerName: string;
+  /** Accepts +96550001234 or 50001234 — normalized server-side. */
+  phone: string;
+  serviceId: string;
+  addonIds: string[];
+  drinkOrders: DrinkOrder[];
+  slotId: string;
+  notes?: string;
+  paymentMethod: PaymentMethod;
+  /** Skip the gateway and mark this booking as paid immediately. */
+  markPaid?: boolean;
+  staffId?: string;
+};
+
+export async function adminCreateBookingAction(input: AdminCreateBookingInput) {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  // Normalize phone: 8-digit local → +965XXXXXXXX, else use as-is.
+  const digits = input.phone.replace(/\D/g, "");
+  const phone =
+    digits.length === 8
+      ? `+965${digits}`
+      : digits.length === 11 && digits.startsWith("965")
+      ? `+${digits}`
+      : input.phone.trim();
+
+  const { data, error } = await supabase.rpc("create_booking", {
+    p_customer_name: input.customerName,
+    p_phone: phone,
+    p_service_id: input.serviceId,
+    p_addon_ids: input.addonIds,
+    p_slot_id: input.slotId,
+    p_notes: input.notes ?? null,
+    p_payment_method: input.paymentMethod,
+    p_card_last4: null,
+    p_drink_orders: input.drinkOrders.filter((d) => d.qty > 0),
+  });
+
+  if (error) {
+    if (error.message.includes("slot_unavailable")) {
+      throw new Error("That slot was just taken — please pick another.");
+    }
+    if (error.message.includes("slot_not_found")) {
+      throw new Error("That slot no longer exists.");
+    }
+    throw error;
+  }
+
+  const booking = mapBooking(data as never);
+
+  // Optional follow-ups: mark paid + assign staff. The RPC sets visa/knet
+  // bookings as 'pending' for the gateway flow; for an admin-created
+  // booking we skip the gateway and let the admin decide whether to mark
+  // it paid right now (e.g. they collected cash on entry).
+  const updates: {
+    payment_status?: "paid";
+    staff_id?: string;
+  } = {};
+  if (input.markPaid) updates.payment_status = "paid";
+  if (input.staffId) updates.staff_id = input.staffId;
+  if (Object.keys(updates).length > 0) {
+    await supabase.from("bookings").update(updates).eq("id", booking.id);
+  }
+
+  revalidatePath("/admin", "layout");
+  redirect(`/admin/bookings/${booking.id}`);
 }
 
 // ────────────────────────────────────────────────────────────────────

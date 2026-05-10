@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { BookingRow } from "@/components/BookingRow";
 import { EmptyState } from "@/components/EmptyState";
@@ -89,7 +90,15 @@ export function BookingsList({
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-brand-blue mb-4">All bookings</h1>
+      <div className="flex items-end justify-between mb-4">
+        <h1 className="text-xl font-bold text-brand-blue">All bookings</h1>
+        <Link
+          href="/admin/bookings/new"
+          className="btn-primary !py-2 !px-3 text-sm"
+        >
+          + New booking
+        </Link>
+      </div>
 
       <div className="card mb-4 space-y-3">
         <div>

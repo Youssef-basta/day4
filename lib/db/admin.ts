@@ -267,6 +267,14 @@ export async function requireOwner() {
   return session;
 }
 
+export async function requireAdmin() {
+  const session = await getCurrentAdmin();
+  if (!session) {
+    throw new Error("Sign in required");
+  }
+  return session;
+}
+
 export async function getStaffAll(): Promise<Staff[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
