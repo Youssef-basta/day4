@@ -7,6 +7,7 @@ import {
   ADMIN_COOKIE,
   getAdminPassword,
   maxAgeSeconds,
+  sessionCookieOpts,
   signSession,
 } from "@/lib/auth";
 import {
@@ -36,9 +37,7 @@ export async function loginAction(
           role: user.role,
         });
         cookies().set(ADMIN_COOKIE, token, {
-          httpOnly: true,
-          sameSite: "lax",
-          path: "/",
+          ...sessionCookieOpts(),
           maxAge: maxAgeSeconds(),
         });
         redirect("/admin");
@@ -48,7 +47,9 @@ export async function loginAction(
   }
 
   // 2. Backward-compat: legacy single-password fallback.
-  if (password === getAdminPassword()) {
+  //    Only active when ADMIN_PASSWORD is explicitly set in env (no default).
+  const legacyPwd = getAdminPassword();
+  if (legacyPwd && password === legacyPwd) {
     const fallbackOwner = await getOwnerForFallback();
     if (!fallbackOwner) {
       return {
@@ -62,9 +63,7 @@ export async function loginAction(
       role: fallbackOwner.role,
     });
     cookies().set(ADMIN_COOKIE, token, {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
+      ...sessionCookieOpts(),
       maxAge: maxAgeSeconds(),
     });
     redirect("/admin");

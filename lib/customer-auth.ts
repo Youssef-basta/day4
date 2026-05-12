@@ -14,10 +14,12 @@ export type CustomerSession = {
 };
 
 function sessionSecret(): Uint8Array {
-  const raw =
-    process.env.SESSION_SECRET ??
-    process.env.ADMIN_PASSWORD ??
-    "joe-barber-studio-dev-only-secret-change-me";
+  const raw = process.env.SESSION_SECRET;
+  if (!raw || raw.length < 32) {
+    throw new Error(
+      "SESSION_SECRET (>=32 chars) is required. Set it in your environment."
+    );
+  }
   return new TextEncoder().encode(raw);
 }
 
@@ -50,4 +52,14 @@ export async function verifyCustomerSession(
 
 export function customerMaxAgeSeconds() {
   return SESSION_TTL_DAYS * 24 * 60 * 60;
+}
+
+/** Cookie security flags shared by every customer-session write. */
+export function customerCookieOpts() {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+  };
 }

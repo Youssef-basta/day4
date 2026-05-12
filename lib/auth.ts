@@ -1,7 +1,7 @@
 // Admin auth: JWT cookie sessions encoding userId + role + exp.
-// Backed by the admin_users table (bcrypt password hashes). The legacy
-// ADMIN_PASSWORD env var still works as a single-password fallback —
-// authenticating that way grants the seeded owner identity.
+// Backed by the admin_users table (bcrypt password hashes). An optional
+// ADMIN_PASSWORD legacy single-password fallback exists, but only when
+// explicitly set in env — there's no hardcoded default password.
 
 import { SignJWT, jwtVerify } from "jose";
 import type { AdminRole } from "./types";
@@ -16,15 +16,24 @@ export type AdminSession = {
   role: AdminRole;
 };
 
-export function getAdminPassword() {
-  return process.env.ADMIN_PASSWORD || "admin123";
+/**
+ * Returns the legacy single-password fallback, or `null` if not configured.
+ * When `null`, the legacy login path is disabled and only admin_users
+ * credentials are accepted.
+ */
+export function getAdminPassword(): string | null {
+  const raw = process.env.ADMIN_PASSWORD;
+  if (!raw || raw.length < 4) return null;
+  return raw;
 }
 
 function sessionSecret(): Uint8Array {
-  const raw =
-    process.env.SESSION_SECRET ??
-    process.env.ADMIN_PASSWORD ??
-    "joe-barber-studio-dev-only-secret-change-me";
+  const raw = process.env.SESSION_SECRET;
+  if (!raw || raw.length < 32) {
+    throw new Error(
+      "SESSION_SECRET (>=32 chars) is required. Set it in your environment."
+    );
+  }
   return new TextEncoder().encode(raw);
 }
 
@@ -61,4 +70,14 @@ export async function verifySession(
 
 export function maxAgeSeconds() {
   return SESSION_TTL_HOURS * 60 * 60;
+}
+
+/** Cookie security flags shared by every session write. */
+export function sessionCookieOpts() {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+  };
 }

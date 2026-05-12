@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   CUSTOMER_COOKIE,
+  customerCookieOpts,
   customerMaxAgeSeconds,
   signCustomerSession,
 } from "@/lib/customer-auth";
@@ -97,9 +98,7 @@ export async function signupAction(
     email: email ?? undefined,
   });
   cookies().set(CUSTOMER_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
+    ...customerCookieOpts(),
     maxAge: customerMaxAgeSeconds(),
   });
   redirect("/account");
@@ -135,9 +134,7 @@ export async function customerLoginAction(
     email: row.email ?? undefined,
   });
   cookies().set(CUSTOMER_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
+    ...customerCookieOpts(),
     maxAge: customerMaxAgeSeconds(),
   });
   redirect("/account");
@@ -227,9 +224,7 @@ export async function updateProfileAction(input: {
     email: email ?? undefined,
   });
   cookies().set(CUSTOMER_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
+    ...customerCookieOpts(),
     maxAge: customerMaxAgeSeconds(),
   });
 
